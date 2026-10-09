@@ -4,7 +4,7 @@ The public portfolio and the admin panel. React + TypeScript + Vite, Tailwind v4
 Three.js / React Three Fiber for atmosphere only. Deploys to **Vercel**.
 
 The API lives in a separate repository:
-**[Majeed-Portfolio-Backend](https://github.com/majeed74905/Majeed-Portfolio-Backend)**
+**[Majeed-Portfolio-Backend](https://github.com/hajihajara73-gif/Majeed-Portfolio-Backend)**
 (FastAPI, deploys to Render, talks to Neon PostgreSQL).
 
 ```
