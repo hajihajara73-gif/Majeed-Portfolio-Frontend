@@ -124,6 +124,10 @@ so a build with no snapshot still renders correctly.
 | `docs/DEPLOYMENT.md` | Vercel + Render + Neon, environment variables, DNS, smoke tests, manual actions |
 | `docs/ADMIN.md` | CMS architecture and the publish pipeline |
 | `docs/PHASE-7-PRODUCTION-AUDIT.md` | Security audit findings and evidence. Its paths predate the repository split |
+| `docs/SECURITY.md` | Operational security posture, what was verified against the live site, open findings |
+| `docs/SEO.md` | What metadata is emitted and from where, how to verify it, what is deliberately absent |
+| `docs/BACKUP-AND-RECOVERY.md` | What holds state, how to back it up, how to restore it |
+| `docs/FINAL-PRODUCTION-READINESS-REPORT.md` | Pre-launch audit of the live deployment, and what is still open |
 | `CLAUDE.md` | Working rules for this codebase |
 
 ## Outstanding

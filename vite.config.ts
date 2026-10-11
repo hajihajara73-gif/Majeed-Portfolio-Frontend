@@ -104,11 +104,30 @@ function contentSecurityPolicy(mode: string): Plugin {
  * That matters most for the sitemap. It used to ship as a static file
  * containing `<loc>https://example.com/</loc>` — a submittable sitemap
  * pointing at somebody else's domain, which is worse than having none. So the
- * file is generated here, and only when `VITE_SITE_URL` is set.
+ * file is generated here, and only once the domain is actually known: from
+ * `VITE_SITE_URL`, or from the deploying platform's own variable. Never
+ * invented, and never a placeholder.
  */
 function siteMetadata(mode: string): Plugin {
   const read = () => {
-    const raw = loadEnv(mode, process.cwd(), '').VITE_SITE_URL?.trim()
+    const env = loadEnv(mode, process.cwd(), '')
+    // An explicit value always wins — it is the only way to name a domain the
+    // build platform does not know about.
+    const explicit = env.VITE_SITE_URL?.trim()
+    // Failing that, ask the platform instead of guessing. Vercel sets
+    // VERCEL_PROJECT_PRODUCTION_URL on every deployment: the project's
+    // production host, custom domain preferred, with no scheme. That is the
+    // real domain, from the deployment itself, so the canonical link and
+    // sitemap no longer depend on someone remembering a dashboard field.
+    //
+    // Only for a production build. `VERCEL_URL` — the per-deployment host —
+    // would make canonical a different URL on every build, and a preview's
+    // canonical should point at production anyway, which this does.
+    const platform =
+      env.VERCEL_ENV === 'production' && env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : ''
+    const raw = explicit || platform
     if (!raw) return null
     try {
       // Normalised to an origin with no trailing slash, so joining is simple.
@@ -152,8 +171,9 @@ function siteMetadata(mode: string): Plugin {
           'User-agent: *\nAllow: /\n' +
           (origin
             ? `\nSitemap: ${origin}/sitemap.xml\n`
-            : '\n# No Sitemap line: VITE_SITE_URL is not set, and a sitemap\n' +
-              '# pointing at the wrong domain is worse than none.\n'),
+            : '\n# No Sitemap line: this build does not know the site URL, and\n' +
+              '# a sitemap pointing at the wrong domain is worse than none.\n' +
+              '# Set VITE_SITE_URL to fix.\n'),
       })
 
       if (origin) {

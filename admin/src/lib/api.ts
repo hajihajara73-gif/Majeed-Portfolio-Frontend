@@ -41,6 +41,54 @@ export const apiUrl = (path: string): string => `${API_BASE}/api${path}`
 /** The API's origin, or '' in development. Used to build the admin's CSP. */
 export const apiOrigin = API_BASE
 
+/** A registrable domain, approximated as the last two labels. */
+const registrable = (hostname: string): string =>
+  hostname.split('.').slice(-2).join('.')
+
+/**
+ * Whether this build points at an API that is cross-site from the admin.
+ *
+ * The session cookie is `SameSite=Lax`, which a browser sends only within one
+ * registrable domain. Build the admin against an API on a different one and
+ * signing in *appears* to work — the API really does set the cookie — and then
+ * every request after it returns 401 and the media thumbnails come up blank.
+ * Nothing in that failure points at its cause, so it is detected and named
+ * here rather than left to be inferred from a wall of 401s.
+ *
+ * The registrable domain is approximated as the last two labels. That is
+ * correct for this deployment and for every common case; a multi-label public
+ * suffix (`example.co.uk`) would compare equal where it should not, so this
+ * stays quiet rather than crying wolf.
+ *
+ * Returns null when the configuration is sound.
+ */
+export function crossSiteApiWarning(): string | null {
+  // Empty means same-origin through the dev proxy, which is always fine.
+  if (!API_BASE) return null
+
+  let apiHost: string
+  try {
+    apiHost = new URL(API_BASE).hostname
+  } catch {
+    return `VITE_API_BASE_URL is not a valid URL, so no API request can succeed.`
+  }
+
+  const own = window.location.hostname
+  // Development is exempt: localhost is not same-site with anything, and an
+  // absolute base there is a deliberate choice rather than a mistake.
+  if (own === 'localhost' || own === '127.0.0.1') return null
+  if (apiHost === own) return null
+  if (registrable(apiHost) === registrable(own)) return null
+
+  return (
+    `This admin was built against ${apiHost}, which is a different site from ` +
+    `${own}. The session cookie is SameSite=Lax, so the browser will not send ` +
+    `it back: signing in will look like it worked, and every request after it ` +
+    `will fail with 401. Set VITE_API_BASE_URL to an API on ` +
+    `${registrable(own)} and redeploy.`
+  )
+}
+
 export class ApiError extends Error {
   // Declared explicitly rather than as constructor parameter properties:
   // `erasableSyntaxOnly` is on, which forbids that syntax because it emits

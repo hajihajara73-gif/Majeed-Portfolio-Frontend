@@ -13,12 +13,23 @@ type Status =
   | 'sent'
   | 'failed'
   | 'rate-limited'
+  | 'rejected'
 
 const EMPTY: Record<Field, string> = {
   name: '',
   email: '',
   subject: '',
   message: '',
+}
+
+// The API's own limits, mirrored so the browser stops over-long input rather
+// than letting it become a request the server rejects. Kept in step with
+// `ContactRequest` in app/api/routes/public.py; email is RFC 5321's 254.
+const LIMITS: Record<Field, number> = {
+  name: 255,
+  email: 254,
+  subject: 255,
+  message: 5000,
 }
 
 function validate(values: Record<Field, string>): Errors {
@@ -93,6 +104,18 @@ export function ContactsSection() {
 
       if (response.status === 429) {
         setStatus('rate-limited')
+        return
+      }
+      if (response.status === 422) {
+        // The server validates the address more strictly than a browser can —
+        // it rejects reserved names like `.invalid` and `.local`, which the
+        // permissive check above deliberately allows. Every other field is
+        // bounded by `LIMITS` before the request is made, so this is the one
+        // remaining way a well-formed submission comes back refused. The
+        // visitor can fix it, and "something went wrong" would wrongly tell
+        // them not to bother.
+        setStatus('rejected')
+        setErrors({ email: 'That address was not accepted. Please check it.' })
         return
       }
       if (!response.ok) {
@@ -176,6 +199,7 @@ export function ContactsSection() {
               error={errors.name}
               autoComplete="name"
               disabled={sending}
+              maxLength={LIMITS.name}
             />
             <TextField
               id={`${fieldId}-email`}
@@ -186,6 +210,7 @@ export function ContactsSection() {
               error={errors.email}
               autoComplete="email"
               disabled={sending}
+              maxLength={LIMITS.email}
             />
             <TextField
               id={`${fieldId}-subject`}
@@ -194,6 +219,7 @@ export function ContactsSection() {
               onChange={set('subject')}
               error={errors.subject}
               disabled={sending}
+              maxLength={LIMITS.subject}
             />
             <TextField
               id={`${fieldId}-message`}
@@ -203,6 +229,7 @@ export function ContactsSection() {
               onChange={set('message')}
               error={errors.message}
               disabled={sending}
+              maxLength={LIMITS.message}
             />
           </div>
 
@@ -239,7 +266,9 @@ export function ContactsSection() {
             className={cn(
               'mt-[var(--space-sm)] text-caption normal-case',
               status === 'sent' && 'text-success',
-              status === 'failed' || status === 'rate-limited'
+              status === 'failed' ||
+                status === 'rate-limited' ||
+                status === 'rejected'
                 ? 'text-danger'
                 : status !== 'sent' && 'text-muted',
             )}
@@ -250,6 +279,8 @@ export function ContactsSection() {
             {status === 'sent' && contacts.form.successMessage}
             {status === 'rate-limited' &&
               'That is a few messages in a short time. Please try again later, or email directly.'}
+            {status === 'rejected' &&
+              'That email address was not accepted. Please check it and try again.'}
             {status === 'failed' &&
               'Something went wrong sending that. Please email instead.'}
           </p>
@@ -271,6 +302,7 @@ interface TextFieldProps {
   readonly multiline?: boolean
   readonly autoComplete?: string
   readonly disabled?: boolean
+  readonly maxLength?: number
 }
 
 function TextField({
@@ -283,6 +315,7 @@ function TextField({
   multiline,
   autoComplete,
   disabled,
+  maxLength,
 }: TextFieldProps) {
   const errorId = `${id}-error`
   const shared = {
@@ -291,6 +324,7 @@ function TextField({
     onChange,
     autoComplete,
     disabled,
+    maxLength,
     'aria-invalid': error ? true : undefined,
     'aria-describedby': error ? errorId : undefined,
     className: cn(
