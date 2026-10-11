@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ApiError, crossSiteApiWarning } from '@/lib/api'
+import { ApiError, apiConfigError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { Banner, Button, Field, Input } from '@/components/ui'
 
@@ -8,10 +8,9 @@ export function Login() {
   const { signIn, completeTwoFactor } = useAuth()
   const navigate = useNavigate()
 
-  // Checked before anything is typed. A cross-site API base makes signing in
-  // succeed and then everything after it fail, so saying so here is the
-  // difference between a one-line fix and an afternoon of reading 401s.
-  const misconfigured = crossSiteApiWarning()
+  // Checked before anything is typed. Only an unusable API base reaches this:
+  // a cross-site one is corrected in the client rather than reported here.
+  const misconfigured = apiConfigError()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

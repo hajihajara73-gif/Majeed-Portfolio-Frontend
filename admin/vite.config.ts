@@ -6,6 +6,32 @@ import { fileURLToPath, URL } from 'node:url'
 const GOOGLE_FONTS_CSS = 'https://fonts.googleapis.com'
 const GOOGLE_FONTS_FILES = 'https://fonts.gstatic.com'
 
+/** A registrable domain, approximated as the last two labels. */
+const registrable = (hostname: string): string =>
+  hostname.split('.').slice(-2).join('.')
+
+/**
+ * The domain this build will be served from, if it can be known.
+ *
+ * `VITE_SITE_URL` first; failing that `VERCEL_PROJECT_PRODUCTION_URL`, which
+ * Vercel sets on every deployment to the project's production host. Mirrors
+ * how the public site resolves its canonical URL — see ../vite.config.ts.
+ */
+function siteOrigin(env: Record<string, string>): string {
+  const explicit = env.VITE_SITE_URL?.trim()
+  if (explicit) {
+    try {
+      return new URL(explicit).origin
+    } catch {
+      /* fall through */
+    }
+  }
+  if (env.VERCEL_ENV === 'production' && env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  return ''
+}
+
 /**
  * Content-Security-Policy for the admin, injected at build time.
  *
@@ -41,6 +67,25 @@ function contentSecurityPolicy(mode: string): Plugin {
         }
       }
 
+      // The same-site API origin the client falls back to when the configured
+      // one is cross-site. See `resolveApiBase()` in src/lib/api.ts: a
+      // cross-site base cannot carry a SameSite=Lax session cookie, so the
+      // client corrects it at runtime — and the policy has to permit the
+      // corrected origin or the correction is blocked before it is tried.
+      //
+      // Only added when the configured origin really is cross-site, so a
+      // correctly-configured build gets exactly the policy it had before.
+      const site = siteOrigin(env)
+      let fallbackOrigin = ''
+      if (site && apiOrigin) {
+        const siteHost = new URL(site).hostname
+        const apiHost = new URL(apiOrigin).hostname
+        if (registrable(apiHost) !== registrable(siteHost)) {
+          fallbackOrigin = `https://api.${registrable(siteHost)}`
+        }
+      }
+      const apiOrigins = [apiOrigin, fallbackOrigin].filter(Boolean)
+
       const policy = [
         "default-src 'self'",
         // No inline script. The admin has none.
@@ -57,10 +102,10 @@ function contentSecurityPolicy(mode: string): Plugin {
         `font-src 'self' ${GOOGLE_FONTS_FILES}`,
         // Media thumbnails come from the API, and blob: covers object URLs used
         // for previewing a file before it is uploaded.
-        ['img-src', "'self'", 'data:', 'blob:', apiOrigin].filter(Boolean).join(' '),
-        ['connect-src', "'self'", apiOrigin].filter(Boolean).join(' '),
+        ['img-src', "'self'", 'data:', 'blob:', ...apiOrigins].join(' '),
+        ['connect-src', "'self'", ...apiOrigins].join(' '),
         // PDFs and other non-image assets preview in an iframe.
-        ['frame-src', "'self'", apiOrigin].filter(Boolean).join(' '),
+        ['frame-src', "'self'", ...apiOrigins].join(' '),
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",

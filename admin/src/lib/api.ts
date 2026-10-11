@@ -27,7 +27,82 @@ const CSRF_HEADER = 'X-CSRF-Token'
  *
  * Trailing slashes are stripped so the value is forgiving about how it is typed.
  */
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
+const CONFIGURED_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
+  /\/+$/,
+  '',
+)
+
+/** A registrable domain, approximated as the last two labels. */
+const registrable = (hostname: string): string =>
+  hostname.split('.').slice(-2).join('.')
+
+/**
+ * Resolve the API origin, correcting one that cannot possibly work.
+ *
+ * A cross-site API base is not merely a poor choice — it is *non-functional*.
+ * The session cookie is `SameSite=Lax`, so a browser will not send it to a
+ * different registrable domain, and the admin signs in and then 401s on every
+ * request after it. Using that value guarantees failure, so this prefers a
+ * same-site origin derived from the domain the admin is actually served from:
+ * `api.<registrable domain>`, which is the deployment layout this project
+ * documents throughout.
+ *
+ * That derivation is the one piece of inference here, and it is deliberately
+ * narrow. It happens only when the configured value is already broken, never
+ * to override a working one, and never in development. A correctly-configured
+ * build never reaches it.
+ *
+ * It is a correction, not a silent one: `apiBaseCorrection` is non-null
+ * whenever it applies, and the module logs a warning naming both origins. The
+ * real fix is still to set VITE_API_BASE_URL properly and redeploy.
+ */
+function resolveApiBase(): { base: string; correction: string | null } {
+  // Empty means same-origin through the dev proxy, which always works.
+  if (!CONFIGURED_BASE) return { base: '', correction: null }
+  if (typeof window === 'undefined') {
+    return { base: CONFIGURED_BASE, correction: null }
+  }
+
+  let apiHost: string
+  try {
+    apiHost = new URL(CONFIGURED_BASE).hostname
+  } catch {
+    return { base: CONFIGURED_BASE, correction: null }
+  }
+
+  const own = window.location.hostname
+  // Development is exempt: localhost is not same-site with anything, and an
+  // absolute base there is a deliberate choice rather than a mistake.
+  if (own === 'localhost' || own === '127.0.0.1') {
+    return { base: CONFIGURED_BASE, correction: null }
+  }
+  // Already same-origin or same-site: the cookie will be sent. Leave it alone.
+  if (apiHost === own || registrable(apiHost) === registrable(own)) {
+    return { base: CONFIGURED_BASE, correction: null }
+  }
+
+  const corrected = `https://api.${registrable(own)}`
+  return { base: corrected, correction: corrected }
+}
+
+const resolved = resolveApiBase()
+const API_BASE = resolved.base
+
+/**
+ * The origin this client corrected to, or null when the configuration was
+ * sound. Non-null means the deployment is still misconfigured even though the
+ * admin is working.
+ */
+export const apiBaseCorrection = resolved.correction
+
+if (resolved.correction) {
+  console.warn(
+    `[admin] VITE_API_BASE_URL is ${CONFIGURED_BASE}, which is a different ` +
+      `site from ${window.location.hostname}. A SameSite=Lax session cookie ` +
+      `cannot be sent there, so requests are going to ${resolved.correction} ` +
+      `instead. Fix VITE_API_BASE_URL and redeploy.`,
+  )
+}
 
 /**
  * An absolute (or dev-relative) API URL.
@@ -41,52 +116,30 @@ export const apiUrl = (path: string): string => `${API_BASE}/api${path}`
 /** The API's origin, or '' in development. Used to build the admin's CSP. */
 export const apiOrigin = API_BASE
 
-/** A registrable domain, approximated as the last two labels. */
-const registrable = (hostname: string): string =>
-  hostname.split('.').slice(-2).join('.')
-
 /**
- * Whether this build points at an API that is cross-site from the admin.
+ * A configuration problem worth showing a person, or null.
  *
- * The session cookie is `SameSite=Lax`, which a browser sends only within one
- * registrable domain. Build the admin against an API on a different one and
- * signing in *appears* to work — the API really does set the cookie — and then
- * every request after it returns 401 and the media thumbnails come up blank.
- * Nothing in that failure points at its cause, so it is detected and named
- * here rather than left to be inferred from a wall of 401s.
+ * Deliberately narrow. The cross-site case that used to be reported here is
+ * now *corrected* by `resolveApiBase()` rather than merely announced, so the
+ * login screen stays clean and the admin works — the correction is reported to
+ * the console instead, where a maintainer will see it and a visitor will not.
  *
- * The registrable domain is approximated as the last two labels. That is
- * correct for this deployment and for every common case; a multi-label public
- * suffix (`example.co.uk`) would compare equal where it should not, so this
- * stays quiet rather than crying wolf.
- *
- * Returns null when the configuration is sound.
+ * What remains is the case nothing can rescue: a `VITE_API_BASE_URL` that is
+ * not a URL at all. There is no origin to correct to, so every request will
+ * fail, and saying so beats letting it look like an outage.
  */
-export function crossSiteApiWarning(): string | null {
+export function apiConfigError(): string | null {
   // Empty means same-origin through the dev proxy, which is always fine.
   if (!API_BASE) return null
-
-  let apiHost: string
   try {
-    apiHost = new URL(API_BASE).hostname
+    new URL(API_BASE)
+    return null
   } catch {
-    return `VITE_API_BASE_URL is not a valid URL, so no API request can succeed.`
+    return (
+      `VITE_API_BASE_URL is not a valid URL ("${CONFIGURED_BASE}"), so no ` +
+      `request to the API can succeed. Fix it and redeploy.`
+    )
   }
-
-  const own = window.location.hostname
-  // Development is exempt: localhost is not same-site with anything, and an
-  // absolute base there is a deliberate choice rather than a mistake.
-  if (own === 'localhost' || own === '127.0.0.1') return null
-  if (apiHost === own) return null
-  if (registrable(apiHost) === registrable(own)) return null
-
-  return (
-    `This admin was built against ${apiHost}, which is a different site from ` +
-    `${own}. The session cookie is SameSite=Lax, so the browser will not send ` +
-    `it back: signing in will look like it worked, and every request after it ` +
-    `will fail with 401. Set VITE_API_BASE_URL to an API on ` +
-    `${registrable(own)} and redeploy.`
-  )
 }
 
 export class ApiError extends Error {
