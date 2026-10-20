@@ -20,8 +20,15 @@
   # Clickjacking. frame-ancestors is the modern form and is IGNORED in a meta
   # tag, which is why it has to be a real header. X-Frame-Options is kept for
   # older browsers that do not implement it.
-  Content-Security-Policy: frame-ancestors 'none'
-  X-Frame-Options: DENY
+  #
+  # 'self' and SAMEORIGIN rather than 'none' and DENY, deliberately: the
+  # certificate viewer embeds this site's own PDFs in an iframe, and DENY
+  # blocks that too — a browser refuses to frame the document even from the
+  # page that owns it, showing "refused to connect". Third-party framing is
+  # still blocked, which is what the clickjacking protection is for. The admin
+  # keeps the stricter pair; see the /admin/* block below.
+  Content-Security-Policy: frame-ancestors 'self'
+  X-Frame-Options: SAMEORIGIN
 
   # HSTS is ignored in a meta tag and over plain HTTP. Two years, with
   # subdomains. Do not add `preload` until the domain is settled — it is
@@ -46,3 +53,10 @@
 # does, so they can be cached forever.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The admin must never be framed at all, not even by this site. Nothing embeds
+# it, so there is no reason to relax it along with the public pages above.
+/admin/*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
