@@ -54,6 +54,26 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# ...but the folders below are copied verbatim from public/, so their names do
+# NOT change when the file behind them is replaced. Caching those as immutable
+# for a year means a replaced certificate or portrait never reaches anyone who
+# already saw the old one — and it pins the response HEADERS too, which is how
+# a stale X-Frame-Options outlived the fix that removed it.
+/assets/documents/*
+  Cache-Control: public, max-age=3600, must-revalidate
+/assets/certificates/*
+  Cache-Control: public, max-age=3600, must-revalidate
+/assets/images/*
+  Cache-Control: public, max-age=3600, must-revalidate
+/assets/projects/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Large and rarely replaced, so a longer window — but still revalidated.
+/assets/background/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/assets/audio/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
 # The admin must never be framed at all, not even by this site. Nothing embeds
 # it, so there is no reason to relax it along with the public pages above.
 /admin/*
