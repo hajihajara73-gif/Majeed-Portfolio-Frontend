@@ -1,8 +1,14 @@
 name: Deploy frontend to EC2
 
-# The build runs here, not on the server: the instance has 913 MB of RAM and
-# a Vite + three.js build is the one thing likely to exhaust it. Only the
-# finished static files are shipped.
+# Two jobs on purpose.
+#
+# The build runs on a GitHub-hosted runner: the t3.micro has 913 MB of RAM and
+# a Vite + three.js build is the step most likely to exhaust it.
+#
+# The deploy runs on a self-hosted runner ON the instance. GitHub's hosted
+# runners have thousands of rotating egress IPs, so reaching this box over SSH
+# would mean opening port 22 to the whole internet. The runner dials out
+# instead, so nothing inbound is required and no SSH key leaves the server.
 
 on:
   push:
@@ -14,107 +20,78 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    # A fork's pull request must never reach production credentials.
-    if: github.event_name == 'workflow_dispatch' || github.repository == 'hajihajara73-gif/Majeed-Portfolio-Frontend'
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-
-      - name: Install (lockfile exactly)
-        run: npm ci
-
-      - name: Install admin dependencies
-        run: npm ci --prefix admin
-
+      - run: npm ci
+      - run: npm ci --prefix admin
       - name: Typecheck
         run: npm run typecheck
-
       - name: Lint
         run: npm run lint
-
       - name: Build
-        # Same-origin API: nginx proxies /api to uvicorn on the same host, so
-        # the bundle needs no absolute backend URL and the admin session
-        # cookie stays first-party.
+        # Same-origin API: nginx proxies /api to uvicorn on this host, so the
+        # bundle needs no absolute backend URL and the admin session cookie
+        # stays first-party.
         env:
           VITE_API_BASE_URL: ''
           VITE_CONTACT_ENDPOINT: '/api/public/contact'
           VITE_SITE_URL: ${{ vars.SITE_URL }}
         run: npm run build:all
-
-      - name: Verify the build produced what we expect
+      - name: Validate the build before it can be shipped
         run: |
-          test -f dist/index.html        || { echo "no dist/index.html"; exit 1; }
-          test -f dist/admin/index.html  || { echo "no dist/admin/index.html"; exit 1; }
+          test -f dist/index.html       || { echo "no dist/index.html"; exit 1; }
+          test -f dist/admin/index.html || { echo "no dist/admin/index.html"; exit 1; }
           echo "files: $(find dist -type f | wc -l)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+          retention-days: 3
 
-      - name: Configure SSH with host-key verification
+  deploy:
+    needs: build
+    runs-on: [self-hosted, ec2, deploy]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: incoming
+
+      - name: Stage, validate, keep the old release, then swap
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          # Pinned fingerprint, not StrictHostKeyChecking=no.
-          printf '%s\n' "${{ secrets.EC2_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          set -euo pipefail
+          TARGET=/var/www/portfolio/frontend
+          test -f incoming/index.html       || { echo "artifact invalid"; exit 1; }
+          test -f incoming/admin/index.html || { echo "artifact invalid"; exit 1; }
 
-      - name: Upload build
+          sudo rm -rf "${TARGET}.prev"
+          sudo cp -a "$TARGET" "${TARGET}.prev"
+
+          sudo rsync -a --delete incoming/ "$TARGET"/
+          sudo chown -R ec2-user:nginx "$TARGET"
+          sudo find "$TARGET" -type d -exec chmod 755 {} \;
+          sudo find "$TARGET" -type f -exec chmod 644 {} \;
+          echo "deployed $(find "$TARGET" -type f | wc -l) files"
+
+      - name: Verify, roll back if the site is broken
         run: |
-          tar -czf dist.tgz -C dist .
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
-            dist.tgz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/dist.tgz
-
-      - name: Stage, validate, swap
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'bash -euo pipefail -s' <<'EOS'
-            TARGET=/var/www/portfolio/frontend
-            rm -rf /tmp/stage && mkdir -p /tmp/stage
-            tar -xzf /tmp/dist.tgz -C /tmp/stage
-
-            # Validate BEFORE touching the live directory. A broken archive
-            # must not be able to empty the site.
-            test -f /tmp/stage/index.html       || { echo "staged build invalid"; exit 1; }
-            test -f /tmp/stage/admin/index.html || { echo "staged admin invalid"; exit 1; }
-
-            # Keep the last known-good release for rollback.
-            sudo rm -rf "${TARGET}.prev"
-            sudo cp -a "$TARGET" "${TARGET}.prev" 2>/dev/null || true
-
-            sudo rsync -a --delete /tmp/stage/ "$TARGET"/
-            sudo chown -R ec2-user:nginx "$TARGET"
-            sudo find "$TARGET" -type d -exec chmod 755 {} \;
-            sudo find "$TARGET" -type f -exec chmod 644 {} \;
-            rm -rf /tmp/stage /tmp/dist.tgz
-            echo "deployed $(find "$TARGET" -type f | wc -l) files"
-          EOS
-
-      - name: Verify the live site, roll back if it is broken
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'bash -euo pipefail -s' <<'EOS'
-            TARGET=/var/www/portfolio/frontend
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://127.0.0.1/)
-            api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://127.0.0.1/api/health)
-            echo "homepage=$code api/health=$api"
-            if [ "$code" != "200" ]; then
-              echo "homepage is $code — rolling back"
-              [ -d "${TARGET}.prev" ] && sudo rsync -a --delete "${TARGET}.prev"/ "$TARGET"/
-              exit 1
-            fi
-          EOS
-
-      - name: Result
-        if: always()
-        run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "Frontend deployed: ${{ github.sha }}"
-          else
-            echo "Frontend deployment FAILED — the previous release is still serving."
+          set -uo pipefail
+          TARGET=/var/www/portfolio/frontend
+          home=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://127.0.0.1/)
+          api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://127.0.0.1/api/health)
+          echo "homepage=$home api/health=$api"
+          if [ "$home" != "200" ]; then
+            echo "homepage is $home — rolling back"
+            sudo rsync -a --delete "${TARGET}.prev"/ "$TARGET"/
+            exit 1
           fi
+
+      - name: Clean the workspace
+        if: always()
+        run: rm -rf incoming
