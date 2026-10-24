@@ -66,6 +66,7 @@ export type SectionId =
   | 'skills'
   | 'projects'
   | 'career'
+  | 'certificates'
   | 'achievements'
   | 'contacts'
 
@@ -291,10 +292,19 @@ export type AchievementType =
   | 'presentation'
   | 'milestone'
 
+/** A topical grouping for certificates, ordered in the admin. */
+export interface AchievementCategory {
+  readonly id: string
+  readonly label: string
+  readonly summary?: string | null
+}
+
 export interface Achievement {
   readonly id: string
   readonly title: string
   readonly type: AchievementType
+  /** Category slug, or null when the entry is not filed under one. */
+  readonly categoryId?: string | null
   readonly organization: string | Todo
   readonly date: string | Todo
   readonly description: string | Todo
@@ -312,6 +322,14 @@ export interface AchievementsContent {
   /** May be empty — the section renders an honest empty state. */
   readonly items: readonly Achievement[]
   readonly emptyState: string
+  /** In the order the admin set. Certificates group under these. */
+  readonly categories: readonly AchievementCategory[]
+  /** Copy for the separate certificates section. */
+  readonly certificates: {
+    readonly eyebrow: string
+    readonly heading: string
+    readonly introduction: string
+  }
 }
 
 /* -------------------------------------------------------------------------- */

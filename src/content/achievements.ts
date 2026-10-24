@@ -200,10 +200,23 @@ const items: readonly Achievement[] = [
 ]
 
 export const achievements: AchievementsContent = {
+  // The achievements section proper: awards, competitions, milestones —
+  // everything that is not a course certificate.
   eyebrow: 'Achievements',
-  heading: 'Certifications',
+  heading: 'Recognition',
   introduction:
-    'Certificates from Google, IIT Bombay, TCS iON, Infosys Springboard and others. Select any to read the original.',
+    'Competitions, awards and work that went further than the classroom.',
   items,
   emptyState: 'Nothing listed here yet.',
+
+  // Categories come from the CMS. Empty here on purpose: the base module
+  // must not invent a grouping the admin has not set.
+  categories: [],
+
+  certificates: {
+    eyebrow: 'Certifications',
+    heading: 'Certificates',
+    introduction:
+      'Certificates from Google, IIT Bombay, TCS iON, Infosys Springboard and others. Select any to read the original.',
+  },
 }

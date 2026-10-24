@@ -62,13 +62,83 @@ export const projectsConfig: ResourceConfig = {
   ],
 }
 
+export const achievementCategoriesConfig: ResourceConfig = {
+  path: '/admin/achievement-categories',
+  title: 'Certificate categories',
+  description:
+    'Topical groupings for certificates — "Cyber Security", "Python", and so on. Drag to set the order they appear in on the site; the certificates inside each one keep their own order.',
+  reorderable: true,
+  defaults: { is_visible: true },
+  primary: (row) => str(row, 'label'),
+  secondary: (row) => str(row, 'slug'),
+  fields: [
+    { name: 'slug', label: 'Slug', kind: 'text', createOnly: true, required: true },
+    { name: 'label', label: 'Label', kind: 'text', required: true },
+    { name: 'summary', label: 'Summary', kind: 'textarea' },
+    { name: 'is_visible', label: 'Visible', kind: 'boolean' },
+  ],
+}
+
+/** Shared by both halves of the achievements table. */
+const achievementFields: ResourceConfig['fields'] = [
+  { name: 'organization', label: 'Organisation', kind: 'text' },
+  { name: 'date_label', label: 'Date', kind: 'text', hint: 'Free text, e.g. "July 2023".' },
+  { name: 'description', label: 'Description', kind: 'textarea' },
+  { name: 'credential_id', label: 'Credential ID', kind: 'text' },
+  { name: 'verification_url', label: 'Verification URL', kind: 'text' },
+  { name: 'image_media_id', label: 'Scan image', kind: 'media', mediaKind: 'image', hint: 'Leave empty to list the credential without publishing its scan.' },
+  { name: 'document_media_id', label: 'Document (PDF)', kind: 'media', mediaKind: 'document' },
+  { name: 'is_featured', label: 'Featured', kind: 'boolean' },
+  { name: 'is_public', label: 'Public', kind: 'boolean' },
+  { name: 'allow_download', label: 'Allow download', kind: 'boolean' },
+]
+
+const TYPE_OPTIONS = [
+  { value: 'award', label: 'Award' },
+  { value: 'competition', label: 'Competition' },
+  { value: 'presentation', label: 'Presentation' },
+  { value: 'milestone', label: 'Milestone' },
+]
+
+/**
+ * Certificates and achievements are two pages over one table, split on
+ * `achievement_type`. One table because they are the same record with the
+ * same fields, the same media handling and the same privacy rules — a second
+ * table would be the same columns under a different name.
+ */
+export const certificatesConfig: ResourceConfig = {
+  path: '/admin/achievements',
+  title: 'Certificates',
+  description:
+    'Courses and credentials. Assign a category to group them on the site. A credential can be listed without publishing its scan — leave the media fields empty.',
+  reorderable: true,
+  filter: (row) => row.achievement_type === 'certificate',
+  defaults: { achievement_type: 'certificate', is_public: true, allow_download: true },
+  primary: (row) => str(row, 'title'),
+  secondary: (row) =>
+    [str(row, 'organization'), str(row, 'date_label')].filter(Boolean).join(' · '),
+  fields: [
+    { name: 'slug', label: 'Slug', kind: 'text', createOnly: true, required: true },
+    { name: 'title', label: 'Title', kind: 'text', required: true },
+    {
+      name: 'category_id',
+      label: 'Category',
+      kind: 'select',
+      optionsFrom: '/admin/achievement-categories',
+      hint: 'Optional. Uncategorised certificates are listed on their own.',
+    },
+    ...achievementFields,
+  ],
+}
+
 export const achievementsConfig: ResourceConfig = {
   path: '/admin/achievements',
   title: 'Achievements',
   description:
-    'Certificates, awards, competitions, presentations and milestones. A credential can be listed without publishing its scan — leave the media ids empty.',
+    'Awards, competitions, presentations and milestones — everything that is not a course certificate.',
   reorderable: true,
-  defaults: { achievement_type: 'certificate', is_public: true, allow_download: true },
+  filter: (row) => row.achievement_type !== 'certificate',
+  defaults: { achievement_type: 'award', is_public: true, allow_download: true },
   primary: (row) => str(row, 'title'),
   secondary: (row) =>
     [str(row, 'organization'), str(row, 'date_label'), str(row, 'achievement_type')]
@@ -77,28 +147,8 @@ export const achievementsConfig: ResourceConfig = {
   fields: [
     { name: 'slug', label: 'Slug', kind: 'text', createOnly: true, required: true },
     { name: 'title', label: 'Title', kind: 'text', required: true },
-    {
-      name: 'achievement_type',
-      label: 'Type',
-      kind: 'select',
-      options: [
-        { value: 'certificate', label: 'Certificate' },
-        { value: 'award', label: 'Award' },
-        { value: 'competition', label: 'Competition' },
-        { value: 'presentation', label: 'Presentation' },
-        { value: 'milestone', label: 'Milestone' },
-      ],
-    },
-    { name: 'organization', label: 'Organisation', kind: 'text' },
-    { name: 'date_label', label: 'Date', kind: 'text', hint: 'Free text, e.g. "July 2023".' },
-    { name: 'description', label: 'Description', kind: 'textarea' },
-    { name: 'credential_id', label: 'Credential ID', kind: 'text' },
-    { name: 'verification_url', label: 'Verification URL', kind: 'text' },
-    { name: 'image_media_id', label: 'Scan image', kind: 'media', mediaKind: 'image', hint: 'Leave empty to list the credential without publishing its scan.' },
-    { name: 'document_media_id', label: 'Certificate PDF', kind: 'media', mediaKind: 'document' },
-    { name: 'is_featured', label: 'Featured', kind: 'boolean' },
-    { name: 'is_public', label: 'Public', kind: 'boolean' },
-    { name: 'allow_download', label: 'Allow download', kind: 'boolean' },
+    { name: 'achievement_type', label: 'Type', kind: 'select', options: TYPE_OPTIONS },
+    ...achievementFields,
   ],
 }
 

@@ -426,8 +426,22 @@ const achievementBaseById = new Map(
   achievementsBase.items.map((item) => [item.id, item]),
 )
 
+const achievementCategoryRows = rows(snapshot?.achievementCategories)
+
 export const achievements: AchievementsContent = {
   ...achievementsBase,
+  // Straight from the CMS, already in the admin's order. No fallback to the
+  // base module: it holds none, because a grouping nobody configured would be
+  // a grouping this file invented.
+  categories: achievementCategoryRows
+    ? achievementCategoryRows.flatMap((row) => {
+        const id = str(row.id)
+        const label = str(row.label)
+        return id && label
+          ? [{ id, label, summary: str(row.summary) ?? null }]
+          : []
+      })
+    : achievementsBase.categories,
   items: achievementRows
     ? achievementRows.map((row, index): Achievement => {
         const id = str(row.id) ?? `achievement-${index}`
@@ -437,6 +451,7 @@ export const achievements: AchievementsContent = {
           id,
           title: pick(str(row.title), base?.title ?? ''),
           type: oneOf(ACHIEVEMENT_TYPES, row.type, base?.type ?? 'certificate'),
+          categoryId: str(row.categoryId) ?? null,
           organization: pick(str(row.organization), base?.organization ?? ''),
           date: pick(str(row.date), base?.date ?? ''),
           description: pick(str(row.description), base?.description ?? ''),

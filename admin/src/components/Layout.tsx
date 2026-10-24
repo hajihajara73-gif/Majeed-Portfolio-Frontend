@@ -9,6 +9,8 @@ const NAV = [
   { to: '/skills', label: 'Skills' },
   { to: '/projects', label: 'Projects' },
   { to: '/career', label: 'Career' },
+  { to: '/certificates', label: 'Certificates' },
+  { to: '/certificate-categories', label: 'Certificate categories' },
   { to: '/achievements', label: 'Achievements' },
   { to: '/media', label: 'Media' },
   { to: '/social', label: 'Social' },

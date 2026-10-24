@@ -31,6 +31,12 @@ export interface FieldDef {
   kind: FieldKind
   hint?: string
   options?: { value: string; label: string }[]
+  /**
+   * For `select`: load the options from another resource instead of listing
+   * them here. The value is that resource's admin path, e.g.
+   * '/admin/achievement-categories'. Beats asking anyone to paste a UUID.
+   */
+  optionsFrom?: string
   /** For `media`: restrict the picker to one kind, e.g. 'image'. */
   mediaKind?: string
   createOnly?: boolean
@@ -48,6 +54,15 @@ export interface ResourceConfig {
   reorderable?: boolean
   /** Extra defaults applied when creating. */
   defaults?: Record<string, unknown>
+  /**
+   * Show only the rows this returns true for.
+   *
+   * Lets two pages edit two halves of one table — certificates and the other
+   * achievements — without a second table or a filtered endpoint. Filtering
+   * in the client is honest here: these lists are tens of rows, not
+   * thousands, and the whole set is already fetched for the ordering UI.
+   */
+  filter?: (row: Record<string, unknown>) => boolean
 }
 
 type Row = Record<string, unknown>
@@ -76,13 +91,38 @@ export function ResourcePage({ config }: { config: ResourceConfig }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
 
+  const [linked, setLinked] = useState<Record<string, Row[]>>({})
+
   const load = useCallback(() => {
     api<Row[]>(config.path)
-      .then(setRows)
+      .then((all) => setRows(config.filter ? all.filter(config.filter) : all))
       .catch((caught) => setError(String(caught)))
-  }, [config.path])
+  }, [config.path, config.filter])
 
   useEffect(load, [load])
+
+  // Options for any select that draws them from another resource.
+  useEffect(() => {
+    const sources = [
+      ...new Set(
+        config.fields.map((f) => f.optionsFrom).filter(Boolean) as string[],
+      ),
+    ]
+    if (sources.length === 0) return
+    let live = true
+    Promise.all(
+      sources.map((path) =>
+        api<Row[]>(path)
+          .then((r) => [path, r] as const)
+          .catch(() => [path, [] as Row[]] as const),
+      ),
+    ).then((pairs) => {
+      if (live) setLinked(Object.fromEntries(pairs))
+    })
+    return () => {
+      live = false
+    }
+  }, [config.fields])
 
   const startCreate = () => {
     setEditingId(null)
@@ -216,6 +256,7 @@ export function ResourcePage({ config }: { config: ResourceConfig }) {
                   <FieldInput
                     field={field}
                     value={draft[field.name]}
+                    linked={linked}
                     error={errors[field.name]}
                     onChange={(value) =>
                       setDraft({ ...draft, [field.name]: value })
@@ -295,13 +336,23 @@ function FieldInput({
   field,
   value,
   error,
+  linked,
   onChange,
 }: {
   field: FieldDef
   value: unknown
   error?: string
+  linked?: Record<string, Record<string, unknown>[]>
   onChange: (value: unknown) => void
 }) {
+  // Options drawn from another resource. `label` covers the category-style
+  // rows; `title` and `name` cover the rest, so this works for any resource
+  // without each one needing a special case.
+  const linkedOptions = (linked?.[field.optionsFrom ?? ''] ?? []).map((row) => ({
+    value: String(row.id ?? ''),
+    label: String(row.label ?? row.title ?? row.name ?? row.slug ?? row.id),
+  }))
+
   if (field.kind === 'boolean') {
     return (
       <div className="pt-5">
@@ -344,9 +395,12 @@ function FieldInput({
       ) : field.kind === 'select' ? (
         <Select
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value || null)}
         >
-          {field.options?.map((option) => (
+          {/* A sourced select is optional by nature — the blank entry is how
+              you clear it, and how a row stays uncategorised. */}
+          {field.optionsFrom && <option value="">&mdash; none &mdash;</option>}
+          {(field.options ?? linkedOptions).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

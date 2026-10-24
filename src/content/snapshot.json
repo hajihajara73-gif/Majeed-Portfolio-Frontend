@@ -1,9 +1,9 @@
 {
   "_meta": {
     "source": "published",
-    "snapshotId": "1fc2d6bc-523c-4917-ae84-9c52042b49fd",
-    "checksum": "8ab3cb09a18a61c89d1a36d113e2528450c4525c0a80505e1e262491e1ae2c23",
-    "publishedAt": "2026-09-23T17:00:11.620193+00:00",
+    "snapshotId": "3081161a-a254-4b09-9ed2-2e975c039013",
+    "checksum": "ba783f2dce0fcf200c10eb3966cb484b09ae3ed9f384fb80add90451542c9954",
+    "publishedAt": "2026-10-24T14:10:45.646444+00:00",
     "blocking": [],
     "warnings": [],
     "mediaFiles": 27
@@ -552,6 +552,7 @@
         "height": null
       },
       "featured": true,
+      "categoryId": "it-fundamentals",
       "description": "An online non-credit course authorised by Google and offered through Coursera.",
       "credentialId": null,
       "organization": "Google · Coursera",
@@ -579,6 +580,7 @@
         "height": null
       },
       "featured": true,
+      "categoryId": "it-fundamentals",
       "description": "Training organised at Islamiah College (Autonomous), completed with an online exam conducted remotely from IIT Bombay. Score: 100%.",
       "credentialId": "3317078B6Y",
       "organization": "Spoken Tutorial Project, IIT Bombay",
@@ -606,6 +608,7 @@
         "height": null
       },
       "featured": true,
+      "categoryId": "cyber-security",
       "description": "Information Security Education and Awareness programme, Ministry of Electronics and Information Technology.",
       "credentialId": "MeitY/ISEA/WCHP/033210",
       "organization": "MeitY · ISEA",
@@ -633,6 +636,7 @@
         "height": null
       },
       "featured": true,
+      "categoryId": "python-data",
       "description": null,
       "credentialId": "4748011",
       "organization": "Simplilearn",
@@ -660,6 +664,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": "professional",
       "description": "Covering the process of communication, barriers to communication, and verbal and non-verbal communication.",
       "credentialId": "91306-25782095-1016",
       "organization": "TCS iON",
@@ -687,6 +692,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": "python-data",
       "description": null,
       "credentialId": null,
       "organization": "Infosys Springboard",
@@ -714,6 +720,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": "ai-robotics",
       "description": "Experiment 5 — Voice Controlled Robot (Skyrim Kit).",
       "credentialId": null,
       "organization": "Infosys Springboard",
@@ -741,6 +748,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": null,
       "description": "Certificate of participation in the national Chandrayaan-3 quiz.",
       "credentialId": null,
       "organization": "MyGov · ISRO",
@@ -768,6 +776,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": "python-data",
       "description": null,
       "credentialId": null,
       "organization": "Great Learning Academy",
@@ -795,6 +804,7 @@
         "height": null
       },
       "featured": false,
+      "categoryId": "python-data",
       "description": null,
       "credentialId": "10788473669",
       "organization": "Mindluster",
@@ -808,10 +818,38 @@
       "title": "Typewriting English (Junior) — Second Class",
       "document": null,
       "featured": false,
+      "categoryId": "professional",
       "description": "Government Technical Examinations, Board of Examinations, Chennai.",
       "credentialId": "PC / GA23036228",
       "organization": "Government of Tamil Nadu · Directorate of Technical Education",
       "verificationUrl": null
+    }
+  ],
+  "achievementCategories": [
+    {
+      "id": "python-data",
+      "label": "Python & Data Science",
+      "summary": null
+    },
+    {
+      "id": "cyber-security",
+      "label": "Cyber Security",
+      "summary": null
+    },
+    {
+      "id": "it-fundamentals",
+      "label": "IT & Computing Fundamentals",
+      "summary": null
+    },
+    {
+      "id": "ai-robotics",
+      "label": "AI & Robotics",
+      "summary": null
+    },
+    {
+      "id": "professional",
+      "label": "Professional Skills",
+      "summary": null
     }
   ]
 }

@@ -73,15 +73,27 @@ export function useCanvasPolicy(): CanvasPolicy {
     getServerProbes,
   )
 
-  // Explicit user and system signals win over everything else.
-  if (reducedMotion || probes.saveData) {
+  // Reduced motion still wins over everything. It is not a guess about the
+  // device, it is the visitor telling their operating system that moving
+  // images make them unwell, and overriding it would be a straightforward
+  // accessibility failure.
+  if (reducedMotion) {
     return { tier: 'still', playVideo: false, mountWebGL: false }
   }
 
-  // Phones: an 848px-wide clip stretched over a tall viewport reads worse than
-  // the poster, and skipping it saves the download entirely.
-  if (isSmallScreen) {
+  // Save-Data likewise: the browser is relaying an explicit request not to
+  // spend the visitor's data, and the clip is the single largest asset here.
+  if (probes.saveData) {
     return { tier: 'still', playVideo: false, mountWebGL: false }
+  }
+
+  // Phones play the video too. It used to stop here on the grounds that the
+  // clip reads worse stretched over a tall viewport — that was a judgement
+  // about taste, not capability, and the brief is now that the background is
+  // the video everywhere. WebGL stays off on small screens: that one is about
+  // capability, and the site is specified to be complete without it.
+  if (isSmallScreen) {
+    return { tier: 'reduced', playVideo: true, mountWebGL: false }
   }
 
   if (!probes.webgl || probes.lowPower || isCoarsePointer) {

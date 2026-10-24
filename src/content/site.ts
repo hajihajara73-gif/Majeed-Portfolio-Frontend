@@ -26,6 +26,7 @@ export const site: SiteContent = {
     { id: 'skills', label: 'Skills' },
     { id: 'projects', label: 'Projects' },
     { id: 'career', label: 'Career' },
+    { id: 'certificates', label: 'Certificates' },
     { id: 'achievements', label: 'Achievements' },
     { id: 'contacts', label: 'Contacts' },
   ],

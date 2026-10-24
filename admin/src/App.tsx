@@ -10,6 +10,8 @@ import { Publish } from '@/pages/Publish'
 import { AboutEditor, HomeEditor, SettingsEditor } from '@/pages/Singletons'
 import {
   achievementsConfig,
+  achievementCategoriesConfig,
+  certificatesConfig,
   careerConfig,
   educationConfig,
   expertiseConfig,
@@ -84,6 +86,14 @@ export default function App() {
             element={<ResourcePage config={projectsConfig} />}
           />
           <Route path="career" element={<CareerPage />} />
+          <Route
+            path="certificates"
+            element={<ResourcePage config={certificatesConfig} />}
+          />
+          <Route
+            path="certificate-categories"
+            element={<ResourcePage config={achievementCategoriesConfig} />}
+          />
           <Route
             path="achievements"
             element={<ResourcePage config={achievementsConfig} />}

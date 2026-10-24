@@ -6,7 +6,10 @@ import { SiteHeader } from '@/components/SiteHeader'
 import { home } from '@/content'
 import { auditContent } from '@/lib/contentAudit'
 import { AboutSection } from '@/sections/AboutSection'
-import { AchievementsSection } from '@/sections/AchievementsSection'
+import {
+  AchievementsSection,
+  CertificatesSection,
+} from '@/sections/AchievementsSection'
 import { CareerSection } from '@/sections/CareerSection'
 import { ContactsSection } from '@/sections/ContactsSection'
 import { HomeSection } from '@/sections/HomeSection'
@@ -48,6 +51,7 @@ export default function App() {
           <SkillsSection />
           <ProjectsSection />
           <CareerSection />
+          <CertificatesSection />
           <AchievementsSection />
           <ContactsSection />
         </div>

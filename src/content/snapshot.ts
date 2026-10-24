@@ -42,6 +42,7 @@ export interface SnapshotData {
   readonly projects?: readonly Record<string, unknown>[]
   readonly career?: readonly Record<string, unknown>[]
   readonly achievements?: readonly Record<string, unknown>[]
+  readonly achievementCategories?: readonly Record<string, unknown>[]
 }
 
 const modules = import.meta.glob<{ default: SnapshotData }>('./snapshot.json', {
