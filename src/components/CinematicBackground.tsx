@@ -40,10 +40,40 @@ export function CinematicBackground({ background }: Props) {
       return
     }
 
-    // play() rejects under autoplay policy; muted+playsInline should satisfy it,
-    // but a rejection must not throw an unhandled promise into the console.
+    // muted + playsInline satisfies every documented autoplay policy, but not
+    // every real one: iOS Low Power Mode refuses regardless, and so do some
+    // embedded browsers. A rejection used to be swallowed and left there,
+    // which showed the poster forever with nothing to say why.
+    //
+    // So a refusal arms a one-shot retry on the first interaction of any
+    // kind. By then the page has a user gesture and the same call is allowed.
+    // The listeners are passive, fire once, and remove themselves whether or
+    // not the retry succeeds, so nothing accumulates.
+    let cancelled = false
+    const events = ['pointerdown', 'touchstart', 'keydown', 'scroll'] as const
+
+    const retry = () => {
+      if (cancelled) return
+      video.play().catch(() => undefined)
+    }
+    const arm = () => {
+      for (const event of events) {
+        window.addEventListener(event, retry, { once: true, passive: true })
+      }
+    }
+    const disarm = () => {
+      for (const event of events) {
+        window.removeEventListener(event, retry)
+      }
+    }
+
     const attempt = video.play()
-    if (attempt) attempt.catch(() => undefined)
+    if (attempt) attempt.catch(arm)
+
+    return () => {
+      cancelled = true
+      disarm()
+    }
   }, [policy.playVideo])
 
   return (

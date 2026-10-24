@@ -73,18 +73,37 @@ export function useCanvasPolicy(): CanvasPolicy {
     getServerProbes,
   )
 
-  // Reduced motion still wins over everything. It is not a guess about the
-  // device, it is the visitor telling their operating system that moving
-  // images make them unwell, and overriding it would be a straightforward
-  // accessibility failure.
+  // Reduced motion no longer stops the background video, by explicit and
+  // repeated instruction: the brief is that the background IS the video, on
+  // every device.
+  //
+  // This is a real trade and worth naming. `prefers-reduced-motion` is how
+  // someone tells their operating system that moving images make them unwell,
+  // and an autoplaying loop is squarely the kind of thing it exists to stop.
+  // What is kept is the rest of it: no WebGL, and every entrance animation on
+  // the site still checks `usePrefersReducedMotion()` for itself, so nothing
+  // slides, tilts or fades in. The clip is muted, loops without cuts and
+  // carries no motion the eye is drawn to track, which is the mildest end of
+  // what the preference covers — but it is not nothing.
+  //
+  // On Windows this preference is set by Settings → Accessibility → Visual
+  // effects → Animation effects, which people switch off for performance
+  // without meaning to opt out of video.
   if (reducedMotion) {
-    return { tier: 'still', playVideo: false, mountWebGL: false }
+    return { tier: 'reduced', playVideo: true, mountWebGL: false }
   }
 
-  // Save-Data likewise: the browser is relaying an explicit request not to
-  // spend the visitor's data, and the clip is the single largest asset here.
+  // Save-Data no longer stops it either, by the same instruction. The cost is
+  // the visitor's: the clip is 876 kB and the single largest asset on the
+  // page, and Save-Data is how a browser relays "I am paying for this by the
+  // megabyte". WebGL still stays off, which is the part that would cost them
+  // battery as well as data.
+  //
+  // `poster` still does its job — the still frame shows while the video
+  // loads, so a slow connection sees the image first rather than a black
+  // rectangle, and `preload="metadata"` keeps the initial request small.
   if (probes.saveData) {
-    return { tier: 'still', playVideo: false, mountWebGL: false }
+    return { tier: 'reduced', playVideo: true, mountWebGL: false }
   }
 
   // Phones play the video too. It used to stop here on the grounds that the
