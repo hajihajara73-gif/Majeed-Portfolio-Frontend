@@ -15,8 +15,7 @@ export const home: HomeContent = {
 
   resume: {
     label: 'Résumé',
-    // Place the PDF at public/assets/documents/resume.pdf, then set this path.
-    href: 'TODO_REPLACE_RESUME_PATH',
+    href: '/assets/documents/mohammed-majeed-j-resume.pdf',
     external: true,
   },
 

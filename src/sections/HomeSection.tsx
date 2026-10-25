@@ -1,4 +1,5 @@
-import { ScrollCue } from '@/components/ScrollCue'
+import { useState } from 'react'
+import { ResumeViewer } from '@/components/ResumeViewer'
 import { SocialLinks } from '@/components/SocialLinks'
 import { home, site } from '@/content'
 import { resolved } from '@/types/content'
@@ -21,6 +22,7 @@ import { resolved } from '@/types/content'
  */
 export function HomeSection() {
   const resumeHref = resolved(home.resume.href)
+  const [resumeOpen, setResumeOpen] = useState(false)
 
   return (
     <section
@@ -60,26 +62,21 @@ export function HomeSection() {
             {home.introduction}
           </p>
 
-          <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-sm)]">
-            <a
-              href={home.primaryCta.href}
-              className="rounded-pill bg-gold px-[var(--space-lg)] py-[var(--space-sm)] text-caption font-medium uppercase text-bg-deep transition-colors duration-fast ease-standard hover:bg-gold-soft"
-            >
-              {home.primaryCta.label}
-            </a>
-
-            {/* The résumé button only exists once there is a résumé to link. */}
-            {resumeHref && (
-              <a
-                href={resumeHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-pill border border-border-strong px-[var(--space-lg)] py-[var(--space-sm)] text-caption uppercase text-ink transition-colors duration-fast ease-standard hover:border-gold hover:text-gold"
+          {/* The resume is the primary action. It opens a preview with a
+              download beside it rather than navigating away, so the page is
+              not lost to a PDF viewer. The button only exists once there is a
+              resume to show. */}
+          {resumeHref && (
+            <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-sm)]">
+              <button
+                type="button"
+                onClick={() => setResumeOpen(true)}
+                className="rounded-pill bg-gold px-[var(--space-lg)] py-[var(--space-sm)] text-caption font-medium uppercase text-bg-deep transition-colors duration-fast ease-standard hover:bg-gold-soft"
               >
                 {home.resume.label}
-              </a>
-            )}
-          </div>
+              </button>
+            </div>
+          )}
 
           <SocialLinks
             label="Social profiles"
@@ -87,8 +84,15 @@ export function HomeSection() {
           />
         </div>
 
-        <ScrollCue targetId="about" />
       </div>
+
+      {resumeOpen && resumeHref && (
+        <ResumeViewer
+          href={resumeHref}
+          label={home.resume.label}
+          onClose={() => setResumeOpen(false)}
+        />
+      )}
     </section>
   )
 }
