@@ -97,6 +97,65 @@ export interface SiteContent {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Structured data                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An institution attended. The address parts map 1:1 onto schema.org
+ * `PostalAddress`, so the build never has to parse a display string. `url` is
+ * omitted unless it has actually been checked.
+ */
+export interface AlumniOrganization {
+  readonly name: string
+  readonly addressLocality?: string
+  readonly addressRegion?: string
+  /** ISO 3166-1 alpha-2, e.g. `IN`. */
+  readonly addressCountry?: string
+  readonly url?: string
+}
+
+/** The social preview card: dimensions matter, so they are declared here. */
+export interface SocialCard {
+  readonly path: string
+  readonly width: number
+  readonly height: number
+  readonly alt: string
+}
+
+/**
+ * Facts used to build schema.org JSON-LD, plus the authored SEO defaults.
+ *
+ * This lives in content rather than in the build because every field is a
+ * claim about a real person. It is NOT in the database for the same reason the
+ * nav and the section headings are not: the CMS does not model it, and
+ * inventing a table for it would be a parallel schema (see CLAUDE.md). The
+ * CMS *does* own title, description and the social card, and those override
+ * the defaults here at build time.
+ *
+ * RULE: every value below must be checkable against the repository, the live
+ * site, or something Mohammed stated directly. No employer, no credential and
+ * no metric that is not already true elsewhere in this content layer.
+ */
+export interface StructuredDataFacts {
+  /** What Google is asked to call the site. A request, not a guarantee. */
+  readonly siteName: string
+  /** Authored default `<title>`; the CMS `seo_title` overrides it. */
+  readonly title: string
+  /** Authored default meta description; `seo_description` overrides it. */
+  readonly description: string
+  /** Personal branding alias — used as schema.org `alternateName`. */
+  readonly alternateName: string
+  /** Accurate positioning. Not seniority the person has not earned. */
+  readonly jobTitle: readonly string[]
+  /** One sentence describing the person, for `Person.description`. */
+  readonly personDescription: string
+  /** Topics, drawn from skills that genuinely appear in the portfolio. */
+  readonly knowsAbout: readonly string[]
+  readonly alumniOf: readonly AlumniOrganization[]
+  readonly socialCard: SocialCard
+}
+
+/* -------------------------------------------------------------------------- */
 /* Home                                                                       */
 /* -------------------------------------------------------------------------- */
 

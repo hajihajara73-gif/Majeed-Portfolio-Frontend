@@ -1,4 +1,5 @@
 import type { SiteContent } from '@/types/content'
+import { seoFacts } from './seo'
 
 export const site: SiteContent = {
   name: 'Mohammed Majeed J',
@@ -12,11 +13,14 @@ export const site: SiteContent = {
 
   locale: 'en',
 
+  // Authored in `seo.ts`, not here. That module is the one place both the app
+  // and `vite.config.ts` can read from, which is what keeps the rendered
+  // <title> and the build-time Open Graph tags from drifting apart. The CMS
+  // (`seo_title`, `seo_description`, `og_image_id`) overrides all three.
   seo: {
-    title: 'Mohammed Majeed J — Full Stack Developer',
-    description:
-      'Full stack developer working across Python backends, React interfaces and applied AI. Selected projects, skills and background.',
-    ogImage: 'TODO_REPLACE_OG_IMAGE',
+    title: seoFacts.title,
+    description: seoFacts.description,
+    ogImage: seoFacts.socialCard.path,
   },
 
   // The only seven top-level destinations. Do not add to this list.
@@ -37,7 +41,15 @@ export const site: SiteContent = {
     { label: 'GitHub', href: 'https://github.com/majeed74905', external: true },
     {
       label: 'LinkedIn',
-      href: 'https://www.linkedin.com/in/mohammed-majeed-a337842a4',
+      // Confirmed by Mohammed on 2026-11-04. The previous value was the
+      // auto-generated vanity URL (`/in/mohammed-majeed-a337842a4`).
+      //
+      // This list is REPLACED WHOLESALE by the CMS snapshot when one exists
+      // (see published.ts), and the snapshot still carries the old URL — so
+      // changing it here fixes a snapshot-less build and records the truth in
+      // the repository, but the live site and the JSON-LD `sameAs` follow the
+      // snapshot until this is updated in the admin and re-published.
+      href: 'https://www.linkedin.com/in/majeed74905/',
       external: true,
     },
     {

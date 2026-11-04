@@ -44,6 +44,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /**
+   * Put a modal dialog back in the middle of the screen.
+   *
+   * The browser's own stylesheet centres `<dialog>` with `margin: auto`, but
+   * Tailwind's preflight resets `margin: 0` on every element and wins. The
+   * result is that every dialog opened with `showModal()` renders pinned to
+   * the top-left corner of the viewport, overlapping the page behind it.
+   *
+   * `:modal` matches only dialogs opened with `showModal()`, so a non-modal
+   * dialog — which should stay in the normal flow — is left alone.
+   */
+  dialog:modal {
+    margin: auto;
+  }
+
   /* Never remove this without a replacement — the admin must be fully
      keyboard operable. */
   :focus-visible {

@@ -126,6 +126,12 @@ so a build with no snapshot still renders correctly.
 | `docs/PHASE-7-PRODUCTION-AUDIT.md` | Security audit findings and evidence. Its paths predate the repository split |
 | `docs/SECURITY.md` | Operational security posture, what was verified against the live site, open findings |
 | `docs/SEO.md` | What metadata is emitted and from where, how to verify it, what is deliberately absent |
+| `docs/SEO-AUDIT.md` | Technical SEO audit of the live site: what was wrong, what was fixed, what was measured |
+| `docs/SEO-KEYWORD-STRATEGY.md` | Keyword clusters by intent, mapped onto real content. No invented search volumes |
+| `docs/GOOGLE-SEARCH-CONSOLE-SETUP.md` | Step-by-step Search Console setup, DNS verification and troubleshooting |
+| `docs/SEO-MONITORING.md` | What to watch in Search Console, how often, and how to read it honestly |
+| `docs/SEO-CONTENT-STRATEGY.md` | Long-term organic growth, proposed articles, and the analytics recommendation |
+| `docs/FINAL-SEO-REPORT.md` | PASS/FAIL on every SEO check, manual actions, and changed files |
 | `docs/BACKUP-AND-RECOVERY.md` | What holds state, how to back it up, how to restore it |
 | `docs/FINAL-PRODUCTION-READINESS-REPORT.md` | Pre-launch audit of the live deployment, and what is still open |
 | `CLAUDE.md` | Working rules for this codebase |

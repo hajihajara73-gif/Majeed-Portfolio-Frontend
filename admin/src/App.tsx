@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { ThemeProvider } from '@/lib/theme'
 import { Layout } from '@/components/Layout'
 import { ResourcePage } from '@/components/ResourcePage'
 import { Dashboard } from '@/pages/Dashboard'
@@ -67,8 +68,11 @@ function AboutPage() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    // ThemeProvider sits ABOVE AuthProvider on purpose: the theme has to work
+    // on the login screen, where there is no session.
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route
           element={
@@ -107,8 +111,9 @@ export default function App() {
           <Route path="settings" element={<SettingsEditor />} />
           <Route path="publish" element={<Publish />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

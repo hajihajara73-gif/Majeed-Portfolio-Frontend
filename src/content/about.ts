@@ -36,14 +36,16 @@ export const about: AboutContent = {
     { label: 'In production', value: 'Periyar University' },
   ],
 
-  // Degrees and institutions are confirmed. Dates and locations are not.
+  // Degrees, institutions and cities are confirmed. DATES ARE NOT — they
+  // have never been supplied unambiguously, so they stay TODO rather than
+  // being approximated. Fill them in the admin, not here.
   education: [
     {
       degree: 'Master of Computer Applications (MCA)',
       institution: 'Periyar University',
       start: 'TODO_REPLACE_MCA_START_YEAR',
       end: 'TODO_REPLACE_MCA_END_YEAR',
-      location: 'TODO_REPLACE_MCA_LOCATION',
+      location: 'Salem, Tamil Nadu',
     },
     {
       degree: 'Bachelor of Computer Applications (BCA)',
@@ -51,7 +53,7 @@ export const about: AboutContent = {
       institution: 'Islamiah College (Autonomous)',
       start: 'TODO_REPLACE_BCA_START_YEAR',
       end: 'TODO_REPLACE_BCA_END_YEAR',
-      location: 'TODO_REPLACE_BCA_LOCATION',
+      location: 'Vaniyambadi, Tamil Nadu',
     },
   ],
 

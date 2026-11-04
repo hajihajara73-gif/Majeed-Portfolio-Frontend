@@ -1,7 +1,15 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
+
+// Authored SEO defaults and structured-data facts. Safe to import here
+// BECAUSE that module has no value imports and no `import.meta.env` — see the
+// header comment in src/content/seo.ts, which exists to keep it that way.
+// The `.ts` extension is required here: Vite 8 warns on an extensionless
+// import in the config itself, and tsconfig.node.json allows it.
+import { seoFacts } from './src/content/seo.ts'
 
 const GOOGLE_FONTS_CSS = 'https://fonts.googleapis.com'
 const GOOGLE_FONTS_FILES = 'https://fonts.gstatic.com'
@@ -137,29 +145,316 @@ function siteMetadata(mode: string): Plugin {
     }
   }
 
-  return {
-    name: 'site-metadata',
-    transformIndexHtml() {
-      const origin = read()
-      if (!origin) return []
-      return [
-        { tag: 'link', attrs: { rel: 'canonical', href: `${origin}/` }, injectTo: 'head' },
+  /**
+   * The published snapshot, read from disk at build time.
+   *
+   * The CMS owns the title, the description and the social card
+   * (`seo_title`, `seo_description`, `og_image_id`); it has owned them since
+   * the admin shipped, and until now NOTHING consumed them — the title and
+   * description were hard-coded in index.html and the og:image was a
+   * hard-coded path, so editing any of the three in the admin changed
+   * nothing on the deployed site. This is what closes that loop, and it is
+   * why the publish -> export -> build pipeline now genuinely reaches the
+   * metadata.
+   *
+   * Absent or unparseable is a normal state, not an error: a clone that has
+   * never run the CMS has no snapshot.json, and the authored defaults in
+   * src/content/seo.ts are correct on their own. Same contract as
+   * src/content/snapshot.ts.
+   */
+  const readSnapshot = () => {
+    const str = (value: unknown): string | undefined =>
+      typeof value === 'string' && value.trim().length > 0
+        ? value.trim()
+        : undefined
+
+    try {
+      const path = fileURLToPath(
+        new URL('./src/content/snapshot.json', import.meta.url),
+      )
+      const data = JSON.parse(readFileSync(path, 'utf8')) as Record<
+        string,
+        unknown
+      >
+      const obj = (value: unknown): Record<string, unknown> =>
+        value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+
+      const site = obj(data.site)
+      const seo = obj(site.seo)
+      const meta = obj(data._meta)
+      // The export serialises an asset as an object; tolerate a bare string
+      // too rather than depending on which shape the API emits.
+      const ogAsset = obj(seo.ogImage)
+
+      return {
+        title: str(seo.title),
+        description: str(seo.description),
+        ogImage: str(ogAsset.url) ?? str(seo.ogImage),
+        name: str(site.name),
+        portrait: str(obj(obj(data.about).portrait).url),
+        /** Profile URLs only — `mailto:` is not a `sameAs` value. */
+        sameAs: (Array.isArray(site.social) ? site.social : [])
+          .map((entry) => str(obj(entry).href))
+          .filter((href): href is string => !!href && /^https?:\/\//.test(href)),
+        publishedAt: str(meta.publishedAt),
+      }
+    } catch {
+      return null
+    }
+  }
+
+  /** Authored defaults, with any real CMS value laid over the top. */
+  const effective = () => {
+    const snap = readSnapshot()
+    return {
+      title: snap?.title ?? seoFacts.title,
+      description: snap?.description ?? seoFacts.description,
+      ogImage: snap?.ogImage ?? seoFacts.socialCard.path,
+      name: snap?.name ?? 'Mohammed Majeed J',
+      portrait: snap?.portrait,
+      sameAs: snap?.sameAs ?? [],
+      publishedAt: snap?.publishedAt,
+    }
+  }
+
+  /**
+   * schema.org JSON-LD as a `@graph` of three cross-referenced nodes.
+   *
+   * `docs/SEO.md` previously recorded structured data as *deliberately*
+   * absent, and the reason was sound: every field it wants is a claim about a
+   * real person, and the build is not entitled to decide what is true. That
+   * blocker is gone — Mohammed supplied the positioning, the degrees and the
+   * locations directly — so the facts now live in src/content/seo.ts under
+   * the same no-invention rule as the rest of the content layer.
+   *
+   * Emitted at build time rather than from React because Google must be able
+   * to read it without executing the bundle. A `<script type="application/
+   * ld+json">` block is a DATA block, not executable script, so
+   * `script-src 'self'` does not apply to it and the CSP stays strict.
+   *
+   * Deliberately NOT here: project-level CreativeWork/SoftwareSourceCode.
+   * There are no project pages — one document, hash anchors — so there is no
+   * page for a project entity to be the subject of, and Google produces no
+   * rich result for it. See docs/SEO-AUDIT.md.
+   */
+  const structuredData = (origin: string) => {
+    const seen = effective()
+    const person = `${origin}/#person`
+    const website = `${origin}/#website`
+
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
         {
-          tag: 'meta',
-          attrs: { property: 'og:url', content: `${origin}/` },
-          injectTo: 'head',
+          '@type': 'Person',
+          '@id': person,
+          name: seen.name,
+          alternateName: seoFacts.alternateName,
+          url: `${origin}/`,
+          ...(seen.portrait ? { image: `${origin}${seen.portrait}` } : {}),
+          jobTitle: [...seoFacts.jobTitle],
+          description: seoFacts.personDescription,
+          knowsAbout: [...seoFacts.knowsAbout],
+          alumniOf: seoFacts.alumniOf.map((org) => ({
+            '@type': 'EducationalOrganization',
+            name: org.name,
+            ...(org.url ? { url: org.url } : {}),
+            ...(org.addressLocality
+              ? {
+                  address: {
+                    '@type': 'PostalAddress',
+                    addressLocality: org.addressLocality,
+                    ...(org.addressRegion
+                      ? { addressRegion: org.addressRegion }
+                      : {}),
+                    ...(org.addressCountry
+                      ? { addressCountry: org.addressCountry }
+                      : {}),
+                  },
+                }
+              : {}),
+          })),
+          ...(seen.sameAs.length ? { sameAs: seen.sameAs } : {}),
         },
         {
-          // Social scrapers require an absolute image URL; a root-relative one
-          // is silently dropped by most of them.
+          '@type': 'WebSite',
+          '@id': website,
+          url: `${origin}/`,
+          // The name Google is ASKED to use for the site. It derives site
+          // names from several signals and may still pick its own.
+          name: seoFacts.siteName,
+          alternateName: seen.name,
+          description: seen.description,
+          inLanguage: 'en',
+          publisher: { '@id': person },
+        },
+        {
+          // The homepage is genuinely *about* one person, which is exactly
+          // what ProfilePage means. `mainEntity` is the part that matters.
+          '@type': 'ProfilePage',
+          '@id': `${origin}/#webpage`,
+          url: `${origin}/`,
+          name: seen.title,
+          description: seen.description,
+          isPartOf: { '@id': website },
+          about: { '@id': person },
+          mainEntity: { '@id': person },
+          inLanguage: 'en',
+          ...(seen.publishedAt ? { dateModified: seen.publishedAt } : {}),
+        },
+      ],
+    }
+  }
+
+  return {
+    name: 'site-metadata',
+    transformIndexHtml(html) {
+      const origin = read()
+      const seen = effective()
+      const env = loadEnv(mode, process.cwd(), '')
+
+      /**
+       * A preview deployment must not compete with production in the index.
+       * It already emits no canonical and no sitemap, but nothing previously
+       * stopped a `*.vercel.app` preview being crawled outright. This does.
+       */
+      const isPreview = env.VERCEL_ENV === 'preview'
+
+      const tags: {
+        tag: string
+        attrs: Record<string, string>
+        injectTo: 'head'
+        children?: string
+      }[] = [
+        {
           tag: 'meta',
           attrs: {
-            property: 'og:image',
-            content: `${origin}/assets/background/cabin-poster.jpg`,
+            name: 'robots',
+            content: isPreview
+              ? 'noindex, nofollow'
+              : // max-image-preview:large is what allows Google to show a
+                // full-size thumbnail instead of a 100px one.
+                'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
           },
           injectTo: 'head',
         },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:site_name', content: seoFacts.siteName },
+          injectTo: 'head',
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:locale', content: 'en_US' },
+          injectTo: 'head',
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:title', content: seen.title },
+          injectTo: 'head',
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:description', content: seen.description },
+          injectTo: 'head',
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'twitter:title', content: seen.title },
+          injectTo: 'head',
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'twitter:description', content: seen.description },
+          injectTo: 'head',
+        },
       ]
+
+      if (origin) {
+        const image = `${origin}${seen.ogImage}`
+        tags.push(
+          {
+            tag: 'link',
+            attrs: { rel: 'canonical', href: `${origin}/` },
+            injectTo: 'head',
+          },
+          {
+            tag: 'meta',
+            attrs: { property: 'og:url', content: `${origin}/` },
+            injectTo: 'head',
+          },
+          {
+            // Social scrapers require an absolute image URL; a root-relative
+            // one is silently dropped by most of them.
+            tag: 'meta',
+            attrs: { property: 'og:image', content: image },
+            injectTo: 'head',
+          },
+          {
+            // Dimensions let a scraper lay the card out before the image
+            // arrives, and are what stop it falling back to a small preview.
+            tag: 'meta',
+            attrs: {
+              property: 'og:image:width',
+              content: String(seoFacts.socialCard.width),
+            },
+            injectTo: 'head',
+          },
+          {
+            tag: 'meta',
+            attrs: {
+              property: 'og:image:height',
+              content: String(seoFacts.socialCard.height),
+            },
+            injectTo: 'head',
+          },
+          {
+            tag: 'meta',
+            attrs: {
+              property: 'og:image:alt',
+              content: seoFacts.socialCard.alt,
+            },
+            injectTo: 'head',
+          },
+          {
+            tag: 'meta',
+            attrs: { name: 'twitter:image', content: image },
+            injectTo: 'head',
+          },
+          {
+            tag: 'script',
+            attrs: { type: 'application/ld+json' },
+            children: JSON.stringify(structuredData(origin)),
+            injectTo: 'head',
+          },
+        )
+      }
+
+      /**
+       * index.html carries the authored title and description so that the
+       * page is correct even if this plugin never runs. When the CMS has
+       * overridden either one, rewrite it in place rather than appending a
+       * second copy — duplicate titles and descriptions are themselves an
+       * SEO defect.
+       */
+      let out = html
+      const escape = (value: string) =>
+        value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+
+      out = out.replace(
+        /<title>[\s\S]*?<\/title>/,
+        `<title>${escape(seen.title)}</title>`,
+      )
+      out = out.replace(
+        /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/,
+        `<meta name="description" content="${escape(seen.description)}" />`,
+      )
+
+      return { html: out, tags }
     },
     generateBundle() {
       const origin = read()
@@ -169,6 +464,12 @@ function siteMetadata(mode: string): Plugin {
         fileName: 'robots.txt',
         source:
           'User-agent: *\nAllow: /\n' +
+          // The admin is a private application, not search result material.
+          // It is already `X-Robots-Tag: noindex` at the edge; this saves the
+          // crawl budget as well. Not a security control — see docs/SEO.md.
+          '\n# The admin is a private app. Excluded from crawling, and served\n' +
+          '# with X-Robots-Tag: noindex. This is not an access control.\n' +
+          'Disallow: /admin/\n' +
           (origin
             ? `\nSitemap: ${origin}/sitemap.xml\n`
             : '\n# No Sitemap line: this build does not know the site URL, and\n' +
@@ -177,6 +478,16 @@ function siteMetadata(mode: string): Plugin {
       })
 
       if (origin) {
+        // Day granularity, from the snapshot's own publish timestamp: the one
+        // honest answer to "when did this page last change?" on a site whose
+        // content is baked in at build time. Omitted when there is no
+        // snapshot rather than defaulting to the build date, which would
+        // claim a change that never happened.
+        const published = effective().publishedAt
+        const lastmod = published?.slice(0, 10)
+        const validLastmod =
+          lastmod && /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? lastmod : undefined
+
         this.emitFile({
           type: 'asset',
           fileName: 'sitemap.xml',
@@ -185,6 +496,7 @@ function siteMetadata(mode: string): Plugin {
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
             '  <url>\n' +
             `    <loc>${origin}/</loc>\n` +
+            (validLastmod ? `    <lastmod>${validLastmod}</lastmod>\n` : '') +
             '    <changefreq>monthly</changefreq>\n' +
             '    <priority>1.0</priority>\n' +
             '  </url>\n' +

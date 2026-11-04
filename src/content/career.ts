@@ -1,7 +1,7 @@
 import type { CareerContent } from '@/types/content'
 
 /**
- * Only the two degrees and their institutions are confirmed. Dates, locations
+ * The two degrees, their institutions and their cities are confirmed. DATES
  * and descriptions are not — leave them as TODO rather than approximating.
  *
  * No work experience has been supplied. If there is none yet, that is fine:
@@ -10,7 +10,11 @@ import type { CareerContent } from '@/types/content'
 export const career: CareerContent = {
   eyebrow: 'Career',
   heading: 'The path so far',
-  introduction: 'TODO_REPLACE_CAREER_INTRODUCTION',
+  // Framing copy, not a personal claim: two degrees (about.ts) and four
+  // projects (projects.ts), three of which have a live URL. Rewrite in your
+  // own voice whenever you like — the facts are what must stay true.
+  introduction:
+    'No employment history yet — this is an education timeline, and the work that ran alongside it. The projects section is where the engineering lives.',
 
   entries: [
     {
@@ -20,7 +24,7 @@ export const career: CareerContent = {
       type: 'education',
       start: 'TODO_REPLACE_MCA_START_YEAR',
       end: 'TODO_REPLACE_MCA_END_YEAR',
-      location: 'TODO_REPLACE_MCA_LOCATION',
+      location: 'Salem, Tamil Nadu',
       description: 'TODO_REPLACE_MCA_DESCRIPTION',
       technologies: [],
     },
@@ -31,7 +35,7 @@ export const career: CareerContent = {
       type: 'education',
       start: 'TODO_REPLACE_BCA_START_YEAR',
       end: 'TODO_REPLACE_BCA_END_YEAR',
-      location: 'TODO_REPLACE_BCA_LOCATION',
+      location: 'Vaniyambadi, Tamil Nadu',
       description: 'TODO_REPLACE_BCA_DESCRIPTION',
       technologies: [],
     },

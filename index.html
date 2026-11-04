@@ -4,26 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Mohammed Majeed J — Full Stack Developer</title>
-    <meta
-      name="description"
-      content="Full stack developer working across Python backends, React interfaces and applied AI. Selected projects, skills and background."
-    />
+    <!-- The title and description are the AUTHORED DEFAULTS, kept here on one
+         line each so the page is still correct if the build plugin never runs.
+         They are authored in src/content/seo.ts, and the `site-metadata`
+         plugin rewrites them IN PLACE when the CMS has overridden either one
+         (see vite.config.ts). Keep them on one line and keep them in sync. -->
+    <title>Mohammed Majeed J — Full Stack &amp; Python Backend Developer</title>
+    <meta name="description" content="Portfolio of Mohammed Majeed J — a full stack developer building Python and FastAPI backends, React interfaces, and applied AI projects." />
     <meta name="theme-color" content="#0a0e0c" />
     <meta name="color-scheme" content="dark" />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- Open Graph. The canonical link, og:url and an ABSOLUTE og:image are
-         added at build time from VITE_SITE_URL (see vite.config.ts). They are
-         omitted entirely when it is unset, because a link preview pointing at
-         the wrong domain is worse than no preview. -->
+    <!-- Open Graph. Only the two tags that never vary live here. Everything
+         else in the social and structured-data block — og:title,
+         og:description, og:site_name, og:locale, the canonical link, og:url,
+         the ABSOLUTE og:image with its dimensions, the twitter:* tags, the
+         robots directive and the JSON-LD — is emitted at build time by the
+         `site-metadata` plugin, because each one depends on either the site
+         URL or the published CMS snapshot. One owner, so there can be no
+         duplicate title or description. -->
+    <!-- `website`, not `profile`: og:type=profile is about the OBJECT being a
+         person and expects profile:first_name/last_name to go with it, which
+         would be a second place to keep the same facts. The page is a site
+         homepage. That the page is *about* a person is already said precisely,
+         in the JSON-LD, by ProfilePage + mainEntity. -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Mohammed Majeed J — Full Stack Developer" />
-    <meta
-      property="og:description"
-      content="Full stack developer working across Python backends, React interfaces and applied AI."
-    />
     <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Fonts. The site is fully legible in the fallback stack if these fail,
@@ -61,10 +67,35 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- The interface is React-rendered, so without JavaScript the page is
+         otherwise one <div>. Googlebot renders JavaScript and sees the full
+         site; this is for the crawlers and readers that do not.
+
+         It is a genuine, accurate summary of what the rendered page says —
+         same name, same roles, same links. It is NOT a keyword block and must
+         never become one: anything here that is not also true on the rendered
+         page would be cloaking. Keep it to facts that do not change, so it
+         cannot drift away from the CMS content. -->
     <noscript>
-      <p style="padding: 2rem; color: #f4f0e8">
-        This portfolio needs JavaScript enabled to display.
-      </p>
+      <div style="max-width: 46rem; margin: 0 auto; padding: 2rem; color: #f4f0e8; font-family: system-ui, sans-serif; line-height: 1.6">
+        <h1 style="font-size: 1.9rem; margin-bottom: 0.25rem">Mohammed Majeed J</h1>
+        <p style="color: #d9a855; margin-bottom: 1.25rem">Full Stack Developer &middot; Python Backend Developer</p>
+        <p style="color: #c6c0b2">
+          MCA student at Periyar University, Salem, and a full stack developer
+          working across Python and FastAPI backends, React and TypeScript
+          interfaces, and applied AI. Previously BCA at Islamiah College
+          (Autonomous), Vaniyambadi.
+        </p>
+        <p style="color: #c6c0b2">
+          The full portfolio — projects, skills, career, certificates and
+          contact form — needs JavaScript. These links do not:
+        </p>
+        <ul style="color: #c6c0b2">
+          <li><a style="color: #d9a855" href="https://github.com/majeed74905">GitHub</a></li>
+          <li><a style="color: #d9a855" href="https://www.linkedin.com/in/majeed74905/">LinkedIn</a></li>
+          <li><a style="color: #d9a855" href="mailto:majeed74905@gmail.com">majeed74905@gmail.com</a></li>
+        </ul>
+      </div>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
+import { ThemePicker } from '@/components/ThemePicker'
 import { Button, cn } from '@/components/ui'
 
 const NAV = [
@@ -63,15 +64,21 @@ export function Layout() {
           </ul>
         </nav>
 
-        <div className="border-t border-border px-4 py-3">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              void signOut().then(() => navigate('/login'))
-            }}
-          >
-            Sign out
-          </Button>
+        <div className="space-y-1 border-t border-border px-2 py-3">
+          <ThemePicker />
+          <div className="px-2 pt-1">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                // `signOut` no longer rejects, but the redirect is in a
+                // `finally` regardless: landing on /login is the point of the
+                // button, and it must not depend on the request succeeding.
+                void signOut().finally(() => navigate('/login', { replace: true }))
+              }}
+            >
+              Sign out
+            </Button>
+          </div>
         </div>
       </aside>
 

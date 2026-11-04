@@ -17,7 +17,16 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    // The build config imports src/content/seo.ts to emit the Open Graph tags
+    // and JSON-LD, and TypeScript follows that import into `src`, where the
+    // `@/` alias is used. Same mapping as tsconfig.app.json so a module
+    // resolves identically whichever project is checking it.
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["vite.config.ts"]
 }

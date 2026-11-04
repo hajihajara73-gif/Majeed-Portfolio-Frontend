@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, apiConfigError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { ThemePicker } from '@/components/ThemePicker'
 import { Banner, Button, Field, Input } from '@/components/ui'
 
 export function Login() {
@@ -47,7 +48,7 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-4">
       <form
         onSubmit={onSubmit}
         className="card w-full max-w-sm space-y-4 p-6"
@@ -108,6 +109,13 @@ export function Login() {
           {busy ? 'Working…' : pendingToken ? 'Verify' : 'Sign in'}
         </Button>
       </form>
+
+      {/* The same picker as the sidebar. It works here because the theme is
+          kept in localStorage rather than against the account — there is no
+          session on this screen to hang a preference on. */}
+      <div className="w-full max-w-sm">
+        <ThemePicker placement="bottom" />
+      </div>
     </div>
   )
 }

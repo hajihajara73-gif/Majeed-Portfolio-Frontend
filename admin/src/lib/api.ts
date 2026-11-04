@@ -176,8 +176,14 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const method = options.method ?? 'GET'
   const headers: Record<string, string> = {}
 
-  if (method !== 'GET' && method !== 'HEAD') {
-    headers[CSRF_HEADER] = csrfToken()
+  const unsafe = method !== 'GET' && method !== 'HEAD'
+  // Remembered so a 403 can be explained rather than merely reported. An
+  // empty token here is the signature of a CSRF cookie the admin cannot
+  // read — see the message built below.
+  let sentCsrf = ''
+  if (unsafe) {
+    sentCsrf = csrfToken()
+    headers[CSRF_HEADER] = sentCsrf
   }
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json'
@@ -198,6 +204,31 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   if (!response.ok) {
     const detail = (payload as { detail?: unknown })?.detail
     const asObject = typeof detail === 'object' && detail !== null ? (detail as Record<string, unknown>) : null
+
+    // A 403 on an unsafe request where the CSRF cookie could not be read is
+    // not a mystery, it is a known deployment fault — and "CSRF check failed"
+    // sends people looking in entirely the wrong place.
+    //
+    // The cookie is set by the API's host. When that host differs from the
+    // one serving the admin — `api.example.com` versus `example.com`, the
+    // same SITE but not the same HOST — a host-only cookie is invisible to
+    // `document.cookie` here. The session cookie is still sent, so the
+    // session is fine and only this check fails. The fix is on the server:
+    // set COOKIE_DOMAIN to the registrable domain.
+    if (response.status === 403 && unsafe && !sentCsrf) {
+      throw new ApiError(
+        403,
+        'csrf_cookie_unreadable',
+        `The CSRF cookie (${CSRF_COOKIE}) could not be read, so the request ` +
+          `was rejected. The API at ${API_BASE || window.location.origin} ` +
+          `sets it for its own host, and this page is on ` +
+          `${window.location.origin} — a host-only cookie is not readable ` +
+          `across hosts. Set COOKIE_DOMAIN on the API to the registrable ` +
+          `domain and sign in again.`,
+        detail,
+      )
+    }
+
     throw new ApiError(
       response.status,
       (asObject?.code as string) ?? String(response.status),

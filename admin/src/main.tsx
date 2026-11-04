@@ -2,7 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { initTheme } from '@/lib/theme'
 import './styles.css'
+
+/**
+ * Paint the stored theme before React mounts, so a non-default theme does not
+ * flash the stylesheet's default palette for a frame on every load.
+ */
+initTheme()
 
 /**
  * Activate the web fonts.

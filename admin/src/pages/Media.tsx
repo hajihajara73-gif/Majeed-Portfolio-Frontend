@@ -165,10 +165,101 @@ interface MessageRow {
   created_at: string
 }
 
+/**
+ * The full message, in a modal.
+ *
+ * Native <dialog> with showModal(), same as the public site's viewers: focus
+ * trapping, Escape to close, background inerting and the right role semantics
+ * come from the element rather than being hand-rolled.
+ *
+ * The list truncates subject and sender to stay scannable, so without this
+ * there was no way to read a long message or select an address to reply to.
+ */
+function MessageDialog({
+  row,
+  onClose,
+  onDelete,
+}: {
+  row: MessageRow
+  onClose: () => void
+  onDelete: () => void
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (!dialog.open) dialog.showModal()
+
+    const onClick = (event: MouseEvent) => {
+      if (event.target === dialog) onClose()
+    }
+    dialog.addEventListener('click', onClick)
+    dialog.addEventListener('close', onClose)
+    return () => {
+      dialog.removeEventListener('click', onClick)
+      dialog.removeEventListener('close', onClose)
+    }
+  }, [onClose])
+
+  const subject = row.subject ?? '(no subject)'
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="message-subject"
+      className="w-[min(92vw,42rem)] rounded-lg border border-border bg-surface p-0 text-ink backdrop:bg-black/60"
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+        <div className="min-w-0">
+          <h2 id="message-subject" className="text-base font-semibold text-ink">
+            {subject}
+          </h2>
+          <p className="mt-1 text-sm text-ink-2">
+            {row.name} ·{' '}
+            <a
+              href={`mailto:${row.email}`}
+              className="text-gold underline-offset-4 hover:underline"
+            >
+              {row.email}
+            </a>
+          </p>
+          <p className="mt-0.5 text-xs text-muted">
+            {new Date(row.created_at).toLocaleString()}
+          </p>
+        </div>
+        <Button variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+
+      <div className="p-4">
+        <p className="max-h-[55vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-surface-2 p-3 text-sm text-ink-2">
+          {row.body}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap justify-between gap-2 border-t border-border p-4">
+        <a
+          href={`mailto:${row.email}?subject=${encodeURIComponent(
+            subject.startsWith('Re:') ? subject : `Re: ${subject}`,
+          )}`}
+          className="rounded-sm border border-border-strong px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-gold hover:text-gold"
+        >
+          Reply by email
+        </a>
+        <Button variant="danger" onClick={onDelete}>
+          Delete
+        </Button>
+      </div>
+    </dialog>
+  )
+}
+
 export function Messages() {
   const [rows, setRows] = useState<MessageRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [open, setOpen] = useState<string | null>(null)
+  const [viewing, setViewing] = useState<MessageRow | null>(null)
 
   const load = useCallback(() => {
     api<MessageRow[]>('/admin/messages')
@@ -180,11 +271,33 @@ export function Messages() {
 
   const markRead = async (row: MessageRow) => {
     if (row.is_read) return
-    await api(`/admin/messages/${row.id}`, {
-      method: 'PUT',
-      body: { is_read: true },
-    })
-    load()
+    try {
+      await api(`/admin/messages/${row.id}`, {
+        method: 'PUT',
+        body: { is_read: true },
+      })
+      load()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : String(caught))
+    }
+  }
+
+  const view = (row: MessageRow) => {
+    setViewing(row)
+    void markRead(row)
+  }
+
+  const remove = async (row: MessageRow) => {
+    // Deleting a message is irreversible — there is no archive for it on the
+    // server — so it is confirmed, and the prompt names the sender.
+    if (!confirm(`Delete the message from ${row.name} (${row.email})?`)) return
+    try {
+      await api(`/admin/messages/${row.id}`, { method: 'DELETE' })
+      setViewing(null)
+      load()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : String(caught))
+    }
   }
 
   if (!rows) return error ? <Banner tone="error">{error}</Banner> : <Spinner />
@@ -197,44 +310,55 @@ export function Messages() {
         title="Messages"
         description={`${rows.length} total · ${unread} unread`}
       />
+
+      {error && (
+        <div className="mb-4">
+          <Banner tone="error">{error}</Banner>
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <EmptyState>
-          No messages. The public contact form has no backend yet, so nothing
-          can arrive here until that is wired up.
+          No messages yet. Anything sent through the contact form on the public
+          site arrives here.
         </EmptyState>
       ) : (
         <ul className="card divide-y divide-border">
           {rows.map((row) => (
-            <li key={row.id} className="px-4 py-3">
-              <button
-                type="button"
-                className="flex w-full items-center gap-3 text-left"
-                onClick={() => {
-                  setOpen(open === row.id ? null : row.id)
-                  void markRead(row)
-                }}
-              >
-                {!row.is_read && <Badge tone="gold">new</Badge>}
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm text-ink">
-                    {row.subject ?? '(no subject)'}
-                  </span>
-                  <span className="block truncate text-xs text-muted">
-                    {row.name} · {row.email}
-                  </span>
-                </span>
-                <span className="shrink-0 text-xs text-muted">
-                  {new Date(row.created_at).toLocaleDateString()}
-                </span>
-              </button>
-              {open === row.id && (
-                <p className="mt-3 whitespace-pre-wrap rounded-md bg-surface-2 p-3 text-sm text-ink-2">
-                  {row.body}
+            <li
+              key={row.id}
+              className="flex flex-wrap items-center gap-3 px-4 py-3"
+            >
+              {!row.is_read && <Badge tone="gold">new</Badge>}
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-ink">
+                  {row.subject ?? '(no subject)'}
                 </p>
-              )}
+                <p className="truncate text-xs text-muted">
+                  {row.name} · {row.email}
+                </p>
+              </div>
+
+              <span className="shrink-0 text-xs text-muted">
+                {new Date(row.created_at).toLocaleDateString()}
+              </span>
+
+              <Button onClick={() => view(row)}>View</Button>
+              <Button variant="danger" onClick={() => void remove(row)}>
+                Delete
+              </Button>
             </li>
           ))}
         </ul>
+      )}
+
+      {viewing && (
+        <MessageDialog
+          row={viewing}
+          onClose={() => setViewing(null)}
+          onDelete={() => void remove(viewing)}
+        />
       )}
     </>
   )

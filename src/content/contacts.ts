@@ -3,7 +3,8 @@ import type { ContactsContent } from '@/types/content'
 export const contacts: ContactsContent = {
   eyebrow: 'Contacts',
   heading: 'Get in touch',
-  introduction: 'TODO_REPLACE_CONTACT_INTRODUCTION',
+  introduction:
+    'The form below goes straight to my inbox. Email, GitHub and LinkedIn all reach me too — whichever is easiest.',
 
   // CONFIRM BEFORE LAUNCH: this list came from the earlier design conversation,
   // not from Mohammed directly. Edit it to match what is actually true, or

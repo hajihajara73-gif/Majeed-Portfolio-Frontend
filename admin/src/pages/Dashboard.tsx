@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { PageHeader } from '@/components/Layout'
-import { Badge, Banner, EmptyState, Spinner } from '@/components/ui'
+import { Badge, Banner, Spinner } from '@/components/ui'
 
 interface DashboardData {
   counts: Record<string, number>
@@ -15,16 +15,18 @@ interface DashboardData {
   last_content_update: string | null
 }
 
-interface ActivityRow {
-  id: string
-  action: string
-  actor: string | null
-  target_type: string | null
-  created_at: string
-}
-
+/**
+ * One card per count, and each card counts the thing it is named after.
+ *
+ * Certificates and Achievements are listed separately because they ARE
+ * separate sections — in the admin, in the nav, and on the public site. They
+ * share one table, split by `achievement_type`, and this card used to show
+ * the whole table under the name "Achievements": 11, when the truth is 10
+ * certificates and 1 achievement. The backend now returns both counts.
+ */
 const CARDS: { key: string; label: string; to: string }[] = [
   { key: 'projects', label: 'Projects', to: '/projects' },
+  { key: 'certificates', label: 'Certificates', to: '/certificates' },
   { key: 'achievements', label: 'Achievements', to: '/achievements' },
   { key: 'skills', label: 'Skills', to: '/skills' },
   { key: 'media', label: 'Media', to: '/media' },
@@ -39,18 +41,11 @@ function when(value: string | null): string {
 
 export function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
-  const [activity, setActivity] = useState<ActivityRow[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      api<DashboardData>('/admin/dashboard'),
-      api<ActivityRow[]>('/admin/activity?limit=12'),
-    ])
-      .then(([dashboard, rows]) => {
-        setData(dashboard)
-        setActivity(rows)
-      })
+    api<DashboardData>('/admin/dashboard')
+      .then(setData)
       .catch((caught) => setError(String(caught)))
   }, [])
 
@@ -92,8 +87,11 @@ export function Dashboard() {
         ))}
       </ul>
 
-      <section className="mt-6 grid gap-3 lg:grid-cols-2">
-        <div className="card p-4">
+      {/* Recent activity was removed from this page by request. The audit log
+          it read is untouched and `GET /admin/activity` still serves it —
+          nothing was deleted, it is just no longer on the dashboard. */}
+      <section className="mt-6">
+        <div className="card p-4 lg:max-w-md">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
             Publication
           </h2>
@@ -124,30 +122,6 @@ export function Dashboard() {
               Go to publish →
             </Link>
           </div>
-        </div>
-
-        <div className="card p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-            Recent activity
-          </h2>
-          {activity.length === 0 ? (
-            <div className="mt-3">
-              <EmptyState>Nothing recorded yet.</EmptyState>
-            </div>
-          ) : (
-            <ul className="mt-3 divide-y divide-border text-sm">
-              {activity.map((row) => (
-                <li key={row.id} className="flex justify-between gap-3 py-1.5">
-                  <span className="truncate font-mono text-xs text-ink-2">
-                    {row.action}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {new Date(row.created_at).toLocaleString()}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </section>
     </>

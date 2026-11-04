@@ -14,6 +14,21 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /**
+   * Put a modal dialog back in the middle of the screen.
+   *
+   * The browser's own stylesheet centres `<dialog>` with `margin: auto`, but
+   * Tailwind's preflight resets `margin: 0` on every element and wins. Without
+   * this, the certificate viewer and the résumé viewer both open pinned to the
+   * top-left corner of the viewport instead of centred.
+   *
+   * `:modal` matches only dialogs opened with `showModal()`, so a non-modal
+   * dialog — which should stay in the normal flow — is left alone.
+   */
+  dialog:modal {
+    margin: auto;
+  }
+
   body {
     background-color: var(--color-bg);
     color: var(--color-ink);
