@@ -43,6 +43,110 @@ const KIND_LABEL: Record<string, string> = {
 }
 
 /**
+ * View one asset full size, without leaving the form.
+ *
+ * The thumbnail is 112x80, which is enough to recognise a file and not enough
+ * to read a certificate or check that the right scan is attached — and there
+ * was previously no way to open an attachment at all from the editor, only
+ * Replace and Clear.
+ *
+ * Native <dialog> with showModal(), like every other modal in this project:
+ * focus trapping, Escape to close and background inerting come from the
+ * element. Each kind is rendered with the element that actually handles it,
+ * and "Open in new tab" is always present because an embedded PDF is the one
+ * thing browsers are least consistent about.
+ */
+function MediaViewer({ row, onClose }: { row: MediaRow; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const src = fileUrl(row.id)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (!dialog.open) dialog.showModal()
+
+    const onClick = (event: MouseEvent) => {
+      if (event.target === dialog) onClose()
+    }
+    dialog.addEventListener('click', onClick)
+    dialog.addEventListener('close', onClose)
+    return () => {
+      dialog.removeEventListener('click', onClick)
+      dialog.removeEventListener('close', onClose)
+    }
+  }, [onClose])
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="media-viewer-title"
+      className="w-[min(94vw,64rem)] rounded-lg border border-border bg-surface p-0 text-ink backdrop:bg-black/70"
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+        <div className="min-w-0">
+          <h2
+            id="media-viewer-title"
+            className="truncate text-base font-semibold text-ink"
+          >
+            {row.title || row.original_filename}
+          </h2>
+          <p className="truncate text-xs text-muted">
+            {KIND_LABEL[row.kind] ?? row.kind} · {formatSize(row.byte_size)}
+            {row.width ? ` · ${row.width}×${row.height}` : ''}
+            {row.is_public ? '' : ' · private'}
+          </p>
+        </div>
+        <Button variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+
+      <div className="max-h-[70vh] overflow-auto bg-bg p-4">
+        {row.kind === 'image' && (
+          <img
+            src={src}
+            alt={row.alt_text ?? row.original_filename}
+            className="mx-auto max-w-full rounded-sm"
+          />
+        )}
+        {row.kind === 'document' && (
+          <iframe
+            src={src}
+            title={row.original_filename}
+            className="h-[65vh] w-full rounded-sm border border-border bg-surface"
+          />
+        )}
+        {row.kind === 'video' && (
+          <video src={src} controls className="mx-auto max-h-[65vh] w-full rounded-sm" />
+        )}
+        {row.kind === 'audio' && (
+          <audio src={src} controls className="w-full" />
+        )}
+        {!['image', 'document', 'video', 'audio'].includes(row.kind) && (
+          <p className="text-sm text-muted">
+            No preview for this file type. Use “Open in new tab”.
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-4">
+        <p className="truncate font-mono text-[11px] text-muted">
+          {row.storage_key}
+        </p>
+        <a
+          href={src}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-sm border border-border-strong px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-gold hover:text-gold"
+        >
+          Open in new tab
+        </a>
+      </div>
+    </dialog>
+  )
+}
+
+/**
  * Thumbnail for one asset.
  *
  * Only images get a real preview. Video, audio and PDFs get a typographic
@@ -268,6 +372,7 @@ export function MediaField({
   onChange: (id: string | null) => void
 }) {
   const [picking, setPicking] = useState(false)
+  const [viewing, setViewing] = useState(false)
 
   /**
    * The resolved asset, tagged with the id it was fetched for.
@@ -314,7 +419,23 @@ export function MediaField({
       <div className="flex items-start gap-3">
         <div className="h-20 w-28 shrink-0 overflow-hidden rounded-sm border border-border">
           {row ? (
-            <Thumb row={row} />
+            // The thumbnail is the obvious thing to click to enlarge, so it
+            // opens the viewer too. The button beside it stays, because a
+            // clickable image is not discoverable on its own.
+            // `aria-label` rather than relying on the contents: an image
+            // thumbnail renders `alt=""` when the asset has no alt text,
+            // which would leave this button with no accessible name at all.
+            // `type="button"` matters too — MediaField is used inside forms,
+            // and the default submit type would save the record on click.
+            <button
+              type="button"
+              onClick={() => setViewing(true)}
+              aria-label={`View ${row.original_filename} full size`}
+              title="View full size"
+              className="h-full w-full cursor-zoom-in"
+            >
+              <Thumb row={row} />
+            </button>
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-bg">
               <span className="text-[11px] text-muted">
@@ -344,6 +465,11 @@ export function MediaField({
           )}
 
           <div className="mt-2 flex flex-wrap gap-2">
+            {row && (
+              <Button variant="secondary" onClick={() => setViewing(true)}>
+                View
+              </Button>
+            )}
             <Button onClick={() => setPicking(true)}>
               {row ? 'Replace' : 'Choose media'}
             </Button>
@@ -367,6 +493,10 @@ export function MediaField({
             setPicking(false)
           }}
         />
+      )}
+
+      {viewing && row && (
+        <MediaViewer row={row} onClose={() => setViewing(false)} />
       )}
     </div>
   )

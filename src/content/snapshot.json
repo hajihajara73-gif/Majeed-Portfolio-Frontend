@@ -1,12 +1,12 @@
 {
   "_meta": {
     "source": "published",
-    "snapshotId": "3081161a-a254-4b09-9ed2-2e975c039013",
-    "checksum": "ba783f2dce0fcf200c10eb3966cb484b09ae3ed9f384fb80add90451542c9954",
-    "publishedAt": "2026-10-24T14:10:45.646444+00:00",
+    "snapshotId": "f6d23c99-f76f-4996-9024-21c8c7839383",
+    "checksum": "8e875be0ff5aae6dfa8a60b6b27813ae6bcffe25ee4a7a2bf30149d414600e9f",
+    "publishedAt": "2026-11-04T15:57:18.247662+00:00",
     "blocking": [],
     "warnings": [],
-    "mediaFiles": 27
+    "mediaFiles": 50
   },
   "home": {
     "music": {
@@ -33,7 +33,14 @@
       "Python Backend Specialist",
       "AI Enthusiast"
     ],
-    "resume": null,
+    "resume": {
+      "id": "3d36dd9a-3c23-4efb-a5a1-fae733bcc161",
+      "alt": null,
+      "url": "/uploads/document/7a00dd3da7b2d86aa04db8d91ce24fd1.pdf",
+      "kind": "document",
+      "width": null,
+      "height": null
+    },
     "greeting": "Welcome",
     "headline": "I build systems that hold together.",
     "background": {
@@ -71,9 +78,9 @@
   },
   "site": {
     "seo": {
-      "title": "Mohammed Majeed J — Full Stack Developer",
+      "title": "Mohammed Majeed J — Full Stack & Python Backend Developer",
       "ogImage": null,
-      "description": "Full stack developer working across Python backends, React interfaces and applied AI. Selected projects, skills and background."
+      "description": "Portfolio of Mohammed Majeed J — a full stack developer building Python and FastAPI backends, React interfaces, and applied AI projects."
     },
     "url": null,
     "name": "Mohammed Majeed J",
@@ -85,7 +92,7 @@
         "external": true
       },
       {
-        "href": "https://www.linkedin.com/in/mohammed-majeed-a337842a4",
+        "href": "https://www.linkedin.com/in/majeed74905/",
         "label": "LinkedIn",
         "external": true
       },
@@ -811,6 +818,286 @@
       "verificationUrl": null
     },
     {
+      "id": "nptel-joy-of-computing-python",
+      "date": "Jul–Oct 2025",
+      "type": "certificate",
+      "image": {
+        "id": "d890bba7-03fc-4c26-8ccf-05aec434293e",
+        "alt": "The Joy of Computing using Python certificate",
+        "url": "/assets/certificates/nptel-joy-of-computing-python-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 860
+      },
+      "title": "The Joy of Computing using Python",
+      "document": {
+        "id": "e0da4973-c0f0-4ec9-b42a-89bfe8bd9a8c",
+        "alt": null,
+        "url": "/assets/documents/certificates/nptel-joy-of-computing-python.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": true,
+      "categoryId": "python-data",
+      "description": "Elite grade in the 12-week NPTEL online certification funded by the Ministry of Education, Government of India. Consolidated score 66 percent (online assignments 22.63/25, proctored exam 43/75).",
+      "credentialId": "NPTEL25CS103S967901868",
+      "organization": "NPTEL · IIT Madras",
+      "verificationUrl": null
+    },
+    {
+      "id": "aicte-atal-high-performance-computing",
+      "date": "8–13 September 2025",
+      "type": "certificate",
+      "image": {
+        "id": "98801f9b-83b3-4774-a5ee-bffd7b7b84bd",
+        "alt": "Exploring the Frontiers of High Performance Computing certificate",
+        "url": "/assets/certificates/aicte-atal-high-performance-computing-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 849
+      },
+      "title": "Exploring the Frontiers of High Performance Computing",
+      "document": {
+        "id": "e84fc19e-62b9-4421-ba70-f08e944885cb",
+        "alt": null,
+        "url": "/assets/documents/certificates/aicte-atal-high-performance-computing.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": "workshops-training",
+      "description": "Six-day AICTE ATAL Academy Faculty Development Programme on high performance computing techniques, trends and applications, hosted at Navarasam Arts and Science College for Women.",
+      "credentialId": "ATAL/2025/1756825329",
+      "organization": "AICTE Training and Learning (ATAL) Academy",
+      "verificationUrl": null
+    },
+    {
+      "id": "periyar-cdoe-project-completion",
+      "date": null,
+      "type": "certificate",
+      "image": {
+        "id": "0056dbc0-bae4-404c-b112-82bd9f61d840",
+        "alt": "PhD Admission Management System — Project Completion certificate",
+        "url": "/assets/certificates/periyar-cdoe-project-completion-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 1669
+      },
+      "title": "PhD Admission Management System — Project Completion",
+      "document": {
+        "id": "816d0bbb-4e1b-40e6-bab9-53ad79ba5a0d",
+        "alt": null,
+        "url": "/assets/documents/certificates/periyar-cdoe-project-completion.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": true,
+      "categoryId": "academic-projects",
+      "description": "University certification of the final-year MCA project: a web-based system managing PhD applications, applicant records, document handling and admission workflows, covering frontend, backend and database work.",
+      "credentialId": null,
+      "organization": "Periyar University · Centre for Distance and Online Education",
+      "verificationUrl": null
+    },
+    {
+      "id": "tancet-2025-mca",
+      "date": "May 2025",
+      "type": "certificate",
+      "image": {
+        "id": "7fe46e6d-883d-4b02-9523-6c488d683025",
+        "alt": "TANCET 2025 score card, personal details redacted",
+        "url": "/assets/certificates/tancet-2025-mca-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 1697
+      },
+      "title": "TANCET 2025 — M.C.A",
+      "document": {
+        "id": "a79b0093-c854-4d0e-8c0d-c7decccf1d24",
+        "alt": null,
+        "url": "/assets/documents/certificates/tancet-2025-mca.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": "academic-projects",
+      "description": "Tamil Nadu Common Entrance Test for M.C.A admission, with a percentile score of 68.172. The published scan is redacted: registration number, date of birth, gender, community, nativity, nationality, photograph and signature have been removed.",
+      "credentialId": null,
+      "organization": "Anna University, Chennai",
+      "verificationUrl": null
+    },
+    {
+      "id": "islamiah-proficiency-3rd-year",
+      "date": "2024–2025",
+      "type": "award",
+      "image": {
+        "id": "9d475b03-7348-44ed-b2f9-c7683d639964",
+        "alt": "Second Prize — Proficiency in III B.C.A certificate",
+        "url": "/assets/certificates/islamiah-proficiency-3rd-year-photo-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 800
+      },
+      "title": "Second Prize — Proficiency in III B.C.A",
+      "document": {
+        "id": "31b93f3b-3aa4-47ac-83bf-cf1ec43c00c0",
+        "alt": null,
+        "url": "/assets/documents/certificates/islamiah-proficiency-3rd-year.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": true,
+      "categoryId": null,
+      "description": "Awarded at the College Day Celebrations 2025 for academic proficiency in the third year of B.C.A (Computer Applications).",
+      "credentialId": null,
+      "organization": "Islamiah College (Autonomous), Vaniyambadi",
+      "verificationUrl": null
+    },
+    {
+      "id": "techspark-26-web-designing",
+      "date": "2026",
+      "type": "award",
+      "image": {
+        "id": "e4a74b5d-2a73-43b6-826c-c2a022f2a7fc",
+        "alt": "First Place — Web Designing certificate",
+        "url": "/assets/certificates/techspark-26-web-designing-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 1543
+      },
+      "title": "First Place — Web Designing",
+      "document": {
+        "id": "9e1a86eb-de10-4e31-b371-f7152ce30331",
+        "alt": null,
+        "url": "/assets/documents/certificates/techspark-26-web-designing.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": true,
+      "categoryId": null,
+      "description": "First place in the Web Designing competition at TechSpark'26, a state-level technical symposium.",
+      "credentialId": null,
+      "organization": "AVS Arts and Science College, Omalur",
+      "verificationUrl": null
+    },
+    {
+      "id": "electronova-26-project-pulse",
+      "date": "11 September 2026",
+      "type": "award",
+      "image": {
+        "id": "b7fabd64-3d05-4a29-bda1-623aa2261a06",
+        "alt": "Second Place — Project Pulse certificate",
+        "url": "/assets/certificates/electronova-26-project-pulse-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 809
+      },
+      "title": "Second Place — Project Pulse",
+      "document": {
+        "id": "555a0fbb-8944-42ba-a2e2-4de3ff6ba158",
+        "alt": null,
+        "url": "/assets/documents/certificates/electronova-26-project-pulse.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": null,
+      "description": "Second place in Project Pulse at Electronova'26, a national-level technical symposium run by the Department of Electrical and Electronics Engineering.",
+      "credentialId": null,
+      "organization": "Mahendra Institute of Technology",
+      "verificationUrl": null
+    },
+    {
+      "id": "smart-india-hackathon-2025",
+      "date": "2025",
+      "type": "competition",
+      "image": {
+        "id": "46888e54-daea-4ff7-98a9-6afbb2cfcd1f",
+        "alt": "Smart India Hackathon 2025 certificate",
+        "url": "/assets/certificates/smart-india-hackathon-2025-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 1683
+      },
+      "title": "Smart India Hackathon 2025",
+      "document": {
+        "id": "d2eb0bfe-b250-4116-9054-1af206cccaca",
+        "alt": null,
+        "url": "/assets/documents/certificates/smart-india-hackathon-2025.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": null,
+      "description": "Participated in Smart India Hackathon 2025, held as part of Kanavu Paathai, marking Dr. A. P. J. Abdul Kalam's birth anniversary and World Students' Day.",
+      "credentialId": null,
+      "organization": "Shri Sakthikailassh Women's College · Heartfulness Institute, Salem",
+      "verificationUrl": null
+    },
+    {
+      "id": "aurvexx-2026-hackathon",
+      "date": "9 October 2026",
+      "type": "competition",
+      "image": {
+        "id": "3efe9abb-adb6-409e-a5c4-36a787ea1f90",
+        "alt": "AURVEXX 2026 Hackathon certificate",
+        "url": "/assets/certificates/aurvexx-2026-hackathon-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 860
+      },
+      "title": "AURVEXX 2026 Hackathon",
+      "document": {
+        "id": "c38a47d7-53b6-4a5f-8aee-e6f742d895ce",
+        "alt": null,
+        "url": "/assets/documents/certificates/aurvexx-2026-hackathon.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": null,
+      "description": "Participated in AURVEXX 2026, a hackathon organised by the Department of M.Tech Computer Science and Engineering and the Code Crafters Club.",
+      "credentialId": null,
+      "organization": "Excel Engineering College (Autonomous), Komarapalayam",
+      "verificationUrl": null
+    },
+    {
+      "id": "innofesta-2k26-brain-blast",
+      "date": "8 September 2026",
+      "type": "competition",
+      "image": {
+        "id": "2e6b4b50-f4a8-43e5-9c7e-0dddade7a362",
+        "alt": "Brain Blast — INNOFESTA 2K26 certificate",
+        "url": "/assets/certificates/innofesta-2k26-brain-blast-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 849
+      },
+      "title": "Brain Blast — INNOFESTA 2K26",
+      "document": {
+        "id": "eb286596-67b4-46c1-b0bc-3ef7d214a7a4",
+        "alt": null,
+        "url": "/assets/documents/certificates/innofesta-2k26-brain-blast.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": null,
+      "description": "Participated in the Brain Blast event at INNOFESTA 2K26, a national-level technical symposium.",
+      "credentialId": null,
+      "organization": "Arulmigu Arthanareeswarar Arts and Science College",
+      "verificationUrl": null
+    },
+    {
       "id": "dote-typewriting-english-junior",
       "date": "October 2023",
       "type": "certificate",
@@ -822,6 +1109,34 @@
       "description": "Government Technical Examinations, Board of Examinations, Chennai.",
       "credentialId": "PC / GA23036228",
       "organization": "Government of Tamil Nadu · Directorate of Technical Education",
+      "verificationUrl": null
+    },
+    {
+      "id": "islamiah-proficiency-1st-year",
+      "date": "2022–2023",
+      "type": "award",
+      "image": {
+        "id": "702ab1fc-3c1b-43ff-9191-7bbadf5cbf4f",
+        "alt": "Receiving the first-year proficiency award at the College Day Celebrations 2023",
+        "url": "/assets/certificates/islamiah-proficiency-1st-year-photo-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 801
+      },
+      "title": "Second Prize — Proficiency in B.C.A (First Year)",
+      "document": {
+        "id": "ea8e78d6-780e-4087-a8a9-69386726e1a0",
+        "alt": null,
+        "url": "/assets/documents/certificates/islamiah-proficiency-1st-year.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
+      "featured": false,
+      "categoryId": null,
+      "description": "Awarded at the College Day Celebrations 2023 for academic proficiency in the first year of B.C.A (Computer Application), presented by the Tirupattur District Collector.",
+      "credentialId": null,
+      "organization": "Islamiah College (Autonomous), Vaniyambadi",
       "verificationUrl": null
     }
   ],
@@ -850,6 +1165,16 @@
       "id": "professional",
       "label": "Professional Skills",
       "summary": null
+    },
+    {
+      "id": "academic-projects",
+      "label": "Academic & Projects",
+      "summary": "University project certification and entrance qualifications."
+    },
+    {
+      "id": "workshops-training",
+      "label": "Workshops & Training",
+      "summary": "Formal training programmes and faculty development workshops."
     }
   ]
 }
