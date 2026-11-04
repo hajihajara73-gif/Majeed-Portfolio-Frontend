@@ -1,12 +1,12 @@
 {
   "_meta": {
     "source": "published",
-    "snapshotId": "f6d23c99-f76f-4996-9024-21c8c7839383",
-    "checksum": "8e875be0ff5aae6dfa8a60b6b27813ae6bcffe25ee4a7a2bf30149d414600e9f",
-    "publishedAt": "2026-11-04T15:57:18.247662+00:00",
+    "snapshotId": "21017a7f-4558-402e-b8fb-77c93e4522ef",
+    "checksum": "e53a2f7b1bfd0bfc4c681965be14443e94e904ec6c91d1cc85144cb4a58e7b4d",
+    "publishedAt": "2026-11-04T16:10:14.981826+00:00",
     "blocking": [],
     "warnings": [],
-    "mediaFiles": 50
+    "mediaFiles": 52
   },
   "home": {
     "music": {
@@ -1101,12 +1101,26 @@
       "id": "dote-typewriting-english-junior",
       "date": "October 2023",
       "type": "certificate",
-      "image": null,
+      "image": {
+        "id": "c1589804-c8d5-472c-b3c2-259b7cebf814",
+        "alt": "Typewriting English (Junior) certificate, personal details redacted",
+        "url": "/assets/certificates/dote-typewriting-english-junior-1200.webp",
+        "kind": "image",
+        "width": 1200,
+        "height": 1697
+      },
       "title": "Typewriting English (Junior) — Second Class",
-      "document": null,
+      "document": {
+        "id": "e5311893-3b56-4df4-b162-6b4a235d7579",
+        "alt": null,
+        "url": "/assets/documents/certificates/dote-typewriting-english-junior.pdf",
+        "kind": "document",
+        "width": null,
+        "height": null
+      },
       "featured": false,
       "categoryId": "professional",
-      "description": "Government Technical Examinations, Board of Examinations, Chennai.",
+      "description": "Government Technical Examinations, Board of Examinations, Chennai. The published scan is redacted: register number, date of birth, photograph and the download footer have been removed.",
       "credentialId": "PC / GA23036228",
       "organization": "Government of Tamil Nadu · Directorate of Technical Education",
       "verificationUrl": null
