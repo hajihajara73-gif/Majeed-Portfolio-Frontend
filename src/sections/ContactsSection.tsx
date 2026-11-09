@@ -83,6 +83,12 @@ export function ContactsSection() {
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    // The submit button is disabled while sending, but a form can also be
+    // submitted with Enter, and a double press can land before React has
+    // re-rendered with the disabled attribute. Without this guard that
+    // sends the message twice — two rows, two notification emails.
+    if (status === 'sending') return
+
     const found = validate(values)
     setErrors(found)
     if (Object.keys(found).length > 0) {

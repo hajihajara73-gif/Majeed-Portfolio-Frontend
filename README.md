@@ -126,6 +126,7 @@ so a build with no snapshot still renders correctly.
 | `docs/PHASE-7-PRODUCTION-AUDIT.md` | Security audit findings and evidence. Its paths predate the repository split |
 | `docs/SECURITY.md` | Operational security posture, what was verified against the live site, open findings |
 | `docs/SEO.md` | What metadata is emitted and from where, how to verify it, what is deliberately absent |
+| `docs/EMAIL.md` | Contact-form notification email: Resend setup, delivery states, retry, and what is never published |
 | `docs/SEO-AUDIT.md` | Technical SEO audit of the live site: what was wrong, what was fixed, what was measured |
 | `docs/SEO-KEYWORD-STRATEGY.md` | Keyword clusters by intent, mapped onto real content. No invented search volumes |
 | `docs/GOOGLE-SEARCH-CONSOLE-SETUP.md` | Step-by-step Search Console setup, DNS verification and troubleshooting |
