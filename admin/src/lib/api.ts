@@ -278,3 +278,58 @@ export function fieldErrors(error: unknown): Record<string, string> {
   }
   return result
 }
+
+/**
+ * Download a binary response under the admin session.
+ *
+ * `api()` parses JSON, so it cannot carry bytes. This is the narrow
+ * alternative for the one endpoint that returns a file: an email
+ * attachment.
+ *
+ * It goes through `fetch` with credentials rather than pointing an
+ * `<a href>` at the API, for two reasons. The API lives on a different host,
+ * so a plain link would depend on cookie `SameSite` rules to send the
+ * session at all. And the returned filename is NOT read from the response —
+ * `Content-Disposition` is not in the API's `expose_headers`, and the
+ * sanitised name is already in hand from the attachment metadata, so
+ * there is no reason to trust a header for it.
+ *
+ * The blob URL is revoked immediately after the click: it is same-origin to
+ * the admin and short-lived, and leaving it alive would keep the bytes of
+ * private mail reachable from the page for as long as the tab is open.
+ */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const response = await fetch(apiUrl(path), {
+    method: 'GET',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    const detail = (safeParse(text) as { detail?: unknown })?.detail
+    const asObject =
+      typeof detail === 'object' && detail !== null
+        ? (detail as Record<string, unknown>)
+        : null
+    throw new ApiError(
+      response.status,
+      typeof asObject?.code === 'string' ? asObject.code : 'download_failed',
+      typeof asObject?.message === 'string'
+        ? asObject.message
+        : 'That file could not be downloaded.',
+    )
+  }
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  try {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.append(link)
+    link.click()
+    link.remove()
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}

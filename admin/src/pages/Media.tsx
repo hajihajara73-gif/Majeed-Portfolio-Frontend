@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ApiError, api } from '@/lib/api'
+import { ApiError, api, downloadFile } from '@/lib/api'
 import { PageHeader } from '@/components/Layout'
 import {
   Badge,
@@ -9,6 +9,8 @@ import {
   Input,
   Select,
   Spinner,
+  Textarea,
+  cn,
 } from '@/components/ui'
 
 interface MediaRow {
@@ -212,6 +214,217 @@ function DeliveryBadge({ row }: { row: MessageRow }) {
   return <Badge tone={shown.tone}>{shown.label}</Badge>
 }
 
+interface ThreadAttachment {
+  id: string | null
+  filename: string
+  content_type: string
+  size: number | null
+  inline?: boolean
+  downloadable: boolean
+  blocked_reason: string | null
+}
+
+interface ThreadMessage {
+  id: string
+  direction: string
+  from_email: string
+  to_email: string
+  subject: string | null
+  text_body: string
+  delivery_status: string
+  delivery_error: string | null
+  sent_at: string | null
+  created_at: string
+  // Metadata only. The bytes come from the authenticated endpoint, never
+  // from a URL embedded here.
+  attachments: ThreadAttachment[]
+  // SPF/DKIM/DMARC as Resend evaluated them, or null for anything we sent.
+  auth_results: Record<string, string> | null
+}
+
+const SIZE_UNITS = ['B', 'kB', 'MB']
+
+function readableSize(bytes: number | null): string {
+  if (bytes === null || Number.isNaN(bytes)) return ''
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < SIZE_UNITS.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  return `${unit === 0 ? value : value.toFixed(1)} ${SIZE_UNITS[unit]}`
+}
+
+/**
+ * Attachments on one received message.
+ *
+ * A blocked attachment is still LISTED, with the reason. Hiding it would
+ * leave the admin wondering why a sender said "see attached" and nothing
+ * was there; naming it and refusing to fetch it is the honest answer.
+ */
+function Attachments({
+  messageId,
+  items,
+  onError,
+}: {
+  messageId: string
+  items: ThreadAttachment[]
+  onError: (message: string) => void
+}) {
+  const [busy, setBusy] = useState<string | null>(null)
+  // Inline images are part of the body, not something the sender attached,
+  // so a signature logo does not get announced as an attachment.
+  const shown = items.filter((a) => !a.inline)
+  if (shown.length === 0) return null
+
+  const fetchOne = async (item: ThreadAttachment) => {
+    if (!item.id) return
+    setBusy(item.id)
+    try {
+      await downloadFile(
+        `/admin/messages/${messageId}/attachments/${item.id}`,
+        item.filename,
+      )
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Download failed.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <ul className="mt-2 flex flex-wrap gap-2">
+      {shown.map((item, index) => (
+        <li key={item.id ?? index}>
+          {item.downloadable && item.id ? (
+            <Button
+              variant="ghost"
+              onClick={() => void fetchOne(item)}
+              disabled={busy === item.id}
+            >
+              {busy === item.id ? 'Fetching…' : item.filename}
+              {item.size !== null && (
+                <span className="ml-1 text-[11px] text-muted">
+                  {readableSize(item.size)}
+                </span>
+              )}
+            </Button>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 rounded-md border border-line bg-surface-2 px-2 py-1 text-[11px] text-muted"
+              title={item.blocked_reason ?? 'Not available'}
+            >
+              {item.filename}
+              <span className="text-danger">
+                · {item.blocked_reason ?? 'unavailable'}
+              </span>
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * SPF/DKIM/DMARC, shown only when something did NOT pass.
+ *
+ * A green tick on every message trains people to ignore it. This stays
+ * silent on a clean result and speaks up on a failure, which is the only
+ * time the information changes what you would do.
+ */
+function AuthWarning({ results }: { results: Record<string, string> | null }) {
+  if (!results) return null
+  const failed = Object.entries(results).filter(
+    ([, verdict]) => verdict !== 'pass',
+  )
+  if (failed.length === 0) return null
+  return (
+    <p className="mt-1 rounded-md border border-gold/40 bg-gold/5 p-2 text-[11px] text-ink-2">
+      <strong className="font-medium">Sender not verified.</strong>{' '}
+      {failed.map(([check, verdict]) => `${check}: ${verdict}`).join(', ')}.
+      Treat the address on this message as unconfirmed.
+    </p>
+  )
+}
+
+/**
+ * One entry in the conversation.
+ *
+ * Inbound and outbound are distinguished by indent and surface rather than
+ * by a label alone — the shape tells you who spoke before you read a word,
+ * which is the whole job of a timeline.
+ */
+function TimelineEntry({
+  side,
+  who,
+  address,
+  when,
+  body,
+  status,
+  error,
+  attachments,
+  authResults,
+  messageId,
+  onError,
+}: {
+  side: 'inbound' | 'outbound'
+  who: string
+  address?: string
+  when: string
+  body: string
+  status?: string
+  error?: string | null
+  attachments?: ThreadAttachment[]
+  authResults?: Record<string, string> | null
+  messageId?: string
+  onError?: (message: string) => void
+}) {
+  const outbound = side === 'outbound'
+  return (
+    <div className={cn('mb-3', outbound && 'pl-8')}>
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-ink">{who}</span>
+        {/* The address the message actually came from, which is not always
+            the one on the enquiry — a visitor may reply from a different
+            account, and that is worth seeing rather than papering over. */}
+        {address && (
+          <span className="font-mono text-[11px] text-muted">{address}</span>
+        )}
+        <span className="text-[11px] text-muted">
+          {new Date(when).toLocaleString()}
+        </span>
+        {status && status !== 'sent' && status !== 'received' && (
+          <Badge tone={status === 'failed' ? 'gold' : 'muted'}>{status}</Badge>
+        )}
+      </div>
+      <p
+        className={cn(
+          'whitespace-pre-wrap rounded-md p-3 text-sm',
+          outbound
+            ? 'border border-gold/30 bg-gold/5 text-ink'
+            : 'bg-surface-2 text-ink-2',
+        )}
+      >
+        {body}
+      </p>
+      <AuthWarning results={authResults ?? null} />
+      {messageId && attachments && attachments.length > 0 && onError && (
+        <Attachments
+          messageId={messageId}
+          items={attachments}
+          onError={onError}
+        />
+      )}
+      {error && (
+        <p className="mt-1 rounded-md border border-danger/40 bg-danger/5 p-2 font-mono text-[11px] text-danger">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
 /**
  * One message, full size.
  *
@@ -234,6 +447,12 @@ function MessageDialog({
   busy: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const [thread, setThread] = useState<ThreadMessage[]>([])
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(
+    null,
+  )
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -249,6 +468,63 @@ function MessageDialog({
       dialog.removeEventListener('close', onClose)
     }
   }, [onClose])
+
+  // Load the conversation. Same fetch-in-effect shape as everywhere else:
+  // the work is in an async continuation and `cancelled` stops a late
+  // response writing state after the dialog has moved on.
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const items = await api<ThreadMessage[]>(
+          `/admin/messages/${row.id}/thread`,
+        )
+        if (!cancelled) setThread(items)
+      } catch {
+        // A thread that will not load must not blank the message itself —
+        // the enquiry is still readable above, which is the important part.
+        if (!cancelled) setThread([])
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [row.id])
+
+  const sendReply = async () => {
+    // Guard, not just a disabled button: the textarea submits on Ctrl+Enter
+    // and a second press can land before the re-render.
+    if (sending || !reply.trim()) return
+    setSending(true)
+    setNotice(null)
+    try {
+      const result = await api<{
+        status: string
+        message: string
+        email: ThreadMessage | null
+      }>(`/admin/messages/${row.id}/reply`, {
+        method: 'POST',
+        body: { body: reply },
+      })
+      if (result.email) setThread((previous) => [...previous, result.email!])
+      if (result.status === 'sent') {
+        setReply('')
+        setNotice({ tone: 'ok', text: result.message })
+      } else {
+        // Saved but not delivered. The text stays in the box so nothing the
+        // operator typed is lost.
+        setNotice({ tone: 'bad', text: result.message })
+      }
+    } catch (caught) {
+      setNotice({
+        tone: 'bad',
+        text: caught instanceof ApiError ? caught.message : String(caught),
+      })
+    } finally {
+      setSending(false)
+    }
+  }
 
   const subject = row.subject ?? '(no subject)'
 
@@ -281,10 +557,34 @@ function MessageDialog({
         </Button>
       </div>
 
-      <div className="p-4">
-        <p className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-surface-2 p-3 text-sm text-ink-2">
-          {row.body}
-        </p>
+      <div className="max-h-[60vh] overflow-y-auto p-4">
+        {/* The original enquiry opens the timeline — it is the inbound
+            message that started the thread, so it is drawn like one. */}
+        <TimelineEntry
+          side="inbound"
+          who={row.name}
+          when={row.created_at}
+          body={row.body}
+        />
+
+        {thread.map((m) => (
+          <TimelineEntry
+            key={m.id}
+            side={m.direction === 'outbound' ? 'outbound' : 'inbound'}
+            who={m.direction === 'outbound' ? 'You' : row.name}
+            // Only for received mail: showing our own sending address back
+            // to us on every reply is noise.
+            address={m.direction === 'inbound' ? m.from_email : undefined}
+            when={m.created_at}
+            body={m.text_body}
+            status={m.delivery_status}
+            error={m.delivery_error}
+            attachments={m.attachments}
+            authResults={m.auth_results}
+            messageId={row.id}
+            onError={(text) => setNotice({ tone: 'bad', text })}
+          />
+        ))}
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
           <DeliveryBadge row={row} />
@@ -303,6 +603,51 @@ function MessageDialog({
         )}
       </div>
 
+      {/* The composer. Replies go through Resend from the verified domain,
+          so they thread properly and are recorded — which a mailto: link
+          could never do. The mailto below remains as an escape hatch. */}
+      <div className="border-t border-border p-4">
+        <label
+          htmlFor="reply-body"
+          className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted"
+        >
+          Reply to {row.name} · {row.email}
+        </label>
+        <Textarea
+          id="reply-body"
+          rows={4}
+          value={reply}
+          disabled={sending}
+          onChange={(e) => setReply(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') void sendReply()
+          }}
+          placeholder={`Write your reply — it will be sent as "${
+            subject.toLowerCase().startsWith('re:') ? subject : `Re: ${subject}`
+          }"`}
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => void sendReply()}
+            disabled={sending || !reply.trim()}
+          >
+            {sending ? 'Sending…' : 'Send reply'}
+          </Button>
+          <span className="text-[11px] text-muted">Ctrl+Enter to send</span>
+          {notice && (
+            <span
+              className={cn(
+                'text-xs',
+                notice.tone === 'ok' ? 'text-forest-bright' : 'text-danger',
+              )}
+            >
+              {notice.text}
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-wrap justify-between gap-2 border-t border-border p-4">
         <div className="flex flex-wrap gap-2">
           <a
@@ -311,7 +656,7 @@ function MessageDialog({
             )}`}
             className="rounded-sm border border-border-strong px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-gold hover:text-gold"
           >
-            Reply by email
+            Open in mail app
           </a>
           {row.email_delivery_status !== 'sent' && (
             <Button onClick={onResend} disabled={busy}>
