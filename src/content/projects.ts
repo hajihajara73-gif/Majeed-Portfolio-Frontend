@@ -1,3 +1,4 @@
+import { seoFacts } from './seo'
 import type { Project, ProjectsContent } from '@/types/content'
 
 /**
@@ -98,13 +99,141 @@ const phdAdmission: Project = {
   results: [],
 }
 
+/** The published release, defined once in `seo.ts`. */
+const nexusRelease = seoFacts.publishedApps[0]!
+
+/**
+ * PUBLISHED PRODUCT — live on the Microsoft Edge Add-ons store.
+ *
+ * Verified against the repository at ~/Desktop/Nexus, not against the brief:
+ *
+ *   • version 3.0.0 — `release/extension/manifest.json`, the artifact
+ *     Microsoft reviewed, and the root `package.json`.
+ *   • Manifest V3 — `manifest_version: 3` in that same file.
+ *   • Tesseract.js + WebAssembly — vendored into `release/extension/ocr/`
+ *     as `eng.traineddata` and `tesseract-core-simd-lstm.wasm.js`. Bundled,
+ *     not fetched, which is what makes "local OCR" true rather than a claim.
+ *   • esbuild + TypeScript — the extension's only build dependencies.
+ *   • Canvas API — `packages/ocr/src/render.ts`.
+ *   • Playwright / Vitest — `apps/e2e` and `packages/engine`.
+ *
+ * REACT, VITE AND TAILWIND ARE DELIBERATELY NOT LISTED. They are real, but
+ * they belong to `apps/web`, a companion React console in the same monorepo
+ * — not to the extension Microsoft published. Listing them under a card
+ * headed "Microsoft Edge Add-ons" would describe a different artifact. The
+ * companion console is named in `architecture` instead, where it is true.
+ *
+ * `github` is null: the project has no git remote, no `repository` field and
+ * no public source URL anywhere in its tree. Nothing to link, so nothing is
+ * linked.
+ */
+const nexus: Project = {
+  slug: 'nexus-local-ai-privacy-firewall',
+  title: 'NEXUS 3.0 — Local AI Privacy Firewall',
+  shortTitle: 'NEXUS 3.0',
+  category: 'Browser Extension / Privacy & Security',
+  status: 'live',
+  order: 2,
+  featured: true,
+
+  // Read from seoFacts, not restated. The same values drive the schema.org
+  // SoftwareApplication emitted at build time, so the badge on the card and
+  // the structured data a crawler reads cannot disagree about the version.
+  release: {
+    version: nexusRelease.version,
+    channel: nexusRelease.channel,
+  },
+
+  summary:
+    'A local-first privacy firewall for AI tools. NEXUS inspects what you are about to send — typed prompts, screenshots and clipboard text — finds credentials, keys and personal data in it, scores the risk, and offers a sanitized version to send instead.',
+
+  description: [
+    'The architectural argument is the product: an AI service cannot be the thing that decides whether your data is safe to send to an AI service, because asking it means sending the data first. So detection, scoring and redaction all run on the device, before anything crosses the boundary.',
+    'What that protects is the raw value. When you choose to send a sanitized prompt, the sanitized text is still submitted to whichever AI provider you are using — the secret is what stays behind, replaced by a placeholder that keeps the prompt answerable.',
+  ],
+
+  technologies: [
+    'TypeScript',
+    'Manifest V3',
+    'Tesseract.js',
+    'WebAssembly',
+    'esbuild',
+    'Canvas API',
+    'Chrome Extensions API',
+    'Playwright',
+    'Vitest',
+  ],
+
+  highlights: [
+    'Screenshot privacy firewall — reads text out of a PNG, JPG or WEBP with a bundled WebAssembly OCR engine, maps each detection back to its pixels, and redacts it before the image is saved',
+    'Clipboard guardian — scans clipboard text only when you hand it over; `clipboardRead` is an optional permission, so there is no background monitoring',
+    'Destination-aware policy — rules name both sides, so "API key heading for an external AI" resolves differently from "email address heading for your own organisation"',
+    'The extension ships with no host permissions and no network code at all: the build fails if fetch, XMLHttpRequest, WebSocket, sendBeacon or importScripts appear in the content-script bundle',
+    'Content-Security-Policy pins connect-src to ‘self’, so extension pages cannot reach an external origin even if a future bug tried to',
+    'Proven end to end by a Playwright suite that loads the real unpacked extension, feeds it credentials rendered into actual pixels, and checks the sanitized PNG differs where the secret was',
+  ],
+
+  cover: {
+    src: '/assets/projects/nexus-1280.webp',
+    srcSet:
+      '/assets/projects/nexus-640.webp 640w, /assets/projects/nexus-1280.webp 1280w',
+    sizes: '(max-width: 768px) 92vw, 45vw',
+    alt: 'The NEXUS scanner reviewing a prompt before it is sent: seven detections listed with severity, including a database password and an OpenAI API key, beside a privacy risk score of 94 out of 100 marked critical and a choice of sanitization modes.',
+    width: 1280,
+    height: 800,
+  },
+
+  /* Real captures from the project's own Playwright run, not mock-ups: the
+     suite drives the running product and writes these to `apps/e2e/run-shots`.
+     Every alt text below describes what is actually on screen in that frame.
+
+     The 2.0-era landing shot is deliberately not used — it carries a "2.0"
+     badge, and showing it beside a 3.0.0 release would contradict the badge
+     a reader just looked at. */
+  gallery: [
+    {
+      src: '/assets/projects/nexus-explain-1280.webp',
+      srcSet:
+        '/assets/projects/nexus-explain-640.webp 640w, /assets/projects/nexus-explain-1280.webp 1280w',
+      sizes: '(max-width: 768px) 92vw, 45vw',
+      alt: 'A detection expanded to show why it was flagged: a database password identified as a credential at 79% confidence, located at characters 51 to 62, with the structural detector layer named and the policy set to block.',
+      width: 1280,
+      height: 800,
+    },
+    {
+      src: '/assets/projects/nexus-sanitized-1280.webp',
+      srcSet:
+        '/assets/projects/nexus-sanitized-640.webp 640w, /assets/projects/nexus-sanitized-1280.webp 1280w',
+      sizes: '(max-width: 768px) 92vw, 45vw',
+      alt: 'The sanitized result: the original prompt rewritten with six values replaced by placeholders such as [PASSWORD_REDACTED] and [API_KEY_REDACTED], beside a rebuilt prompt that lists which values were withheld so the model still has the context to answer.',
+      width: 1280,
+      height: 800,
+    },
+  ],
+
+  liveUrl: nexusRelease.url,
+  // No git remote, no `repository` field, no public source URL in the tree.
+  github: null,
+
+  architecture:
+    'A TypeScript monorepo. A shared detection engine does preprocessing, detection, risk scoring and sanitization, and is consumed by three surfaces: the Manifest V3 browser extension published on Edge, an OCR package wrapping a vendored WebAssembly Tesseract build, and a companion React console for reviewing content outside the browser extension. The extension bundle is built with esbuild and carries no runtime dependencies.',
+
+  problem:
+    'Pasting a stack trace, a config file or a screenshot into a chatbot sends whatever was in it — API keys, database URLs, customer data — to a third party’s logs, and possibly a training set. Rotating the key is the only remedy, and most people never realise they need to.',
+
+  features: [],
+  challenges: [],
+  solutions: [],
+  results: [],
+}
+
 const zaraAi: Project = {
   slug: 'zara-ai-platform',
   title: 'Zara AI Platform',
   shortTitle: 'Zara AI',
   category: 'AI Platform / Full-Stack Web Application',
   status: 'live',
-  order: 2,
+  order: 3,
   featured: true,
 
   summary:
@@ -164,7 +293,7 @@ const diabetesPrediction: Project = {
   shortTitle: 'Diabetes Prediction',
   category: 'Machine Learning',
   status: 'live',
-  order: 3,
+  order: 4,
   featured: true,
 
   summary:
@@ -213,62 +342,19 @@ const diabetesPrediction: Project = {
   solutions: [],
   results: [],
 }
-
-const libraryManagement: Project = {
-  slug: 'online-library-management-system',
-  title: 'Online Library Management System',
-  shortTitle: 'Library Management System',
-  category: 'Web Application',
-  status: 'local',
-  // No public deployment. Do not invent one, and do not link to localhost.
-  deploymentNote: 'Local deployment',
-  order: 4,
-  featured: false,
-
-  summary:
-    'An online library management system developed to digitize core library operations, including the management of library records and common CRUD-based workflows through a web interface.',
-
-  description: [],
-
-  technologies: ['PHP', 'PDO', 'MySQL', 'Bootstrap', 'jQuery', 'DataTables'],
-
-  highlights: [
-    'Separate administrator and student areas with session-based login',
-    'CRUD management for books, authors and categories',
-    'Student registration, book issue and return tracking with borrowing history',
-    'Database access through PDO prepared statements against MySQL',
-  ],
-
-  // No live deployment to screenshot, and the repository's bundled template
-  // images are not this project's own work — so no cover image is claimed.
-  gallery: [],
-
-  liveUrl: null,
-  github: 'https://github.com/majeed74905/online-library-management-system',
-
-  architecture: null,
-  problem: null,
-  features: [],
-  challenges: [],
-  solutions: [],
-  results: [],
-}
-
 export const projects: ProjectsContent = {
   eyebrow: 'Projects',
   heading: 'Selected work',
   introduction:
     'Four projects, listed with the technologies each repository actually contains.',
-  items: [phdAdmission, zaraAi, diabetesPrediction, libraryManagement],
+  items: [phdAdmission, nexus, zaraAi, diabetesPrediction],
 }
 
-/** Projects in display order. */
-export const orderedProjects = [...projects.items].sort(
-  (a, b) => a.order - b.order,
-)
-
-/** The single flagship entry, given its own layout. */
-export const flagshipProject = orderedProjects[0]
-
-/** Everything after the flagship. */
-export const secondaryProjects = orderedProjects.slice(1)
+/* Display order, the flagship and the rest used to be derived here and
+ * imported directly by ProjectsSection. They are gone on purpose.
+ *
+ * This module is the BASE content. `published.ts` overlays the CMS snapshot
+ * onto it and `@/content` serves the result, so anything derived from this
+ * file alone silently ignores every edit made in the admin. ProjectsSection
+ * now derives the order from the overlaid list instead; see the note there.
+ */

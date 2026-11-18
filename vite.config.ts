@@ -302,6 +302,33 @@ function siteMetadata(mode: string): Plugin {
           inLanguage: 'en',
           ...(seen.publishedAt ? { dateModified: seen.publishedAt } : {}),
         },
+        /* Published software, one node each.
+         *
+         * The note above rules out a node per PROJECT, and still does: with
+         * no project pages there is nothing for such an entity to be the
+         * subject of. A published extension is a different case. Its
+         * canonical identity is its store listing — a URL that resolves,
+         * that Microsoft reviewed, and that a crawler can follow — so the
+         * node describes something real rather than a heading on this page.
+         *
+         * No `aggregateRating` and no `interactionStatistic`: there is no
+         * honest source for either at build time, and Google penalises
+         * invented review markup. `author` points at the Person node, which
+         * is the whole reason this is worth emitting. */
+        ...seoFacts.publishedApps.map((app) => ({
+          '@type': 'SoftwareApplication',
+          '@id': `${origin}/#app-${app.version.replace(/[^\w.]/g, '')}-${app.category}`,
+          name: app.name,
+          softwareVersion: app.version,
+          applicationCategory: app.category,
+          operatingSystem: app.operatingSystem,
+          description: app.description,
+          url: app.url,
+          installUrl: app.url,
+          author: { '@id': person },
+          publisher: { '@id': person },
+          isPartOf: { '@id': website },
+        })),
       ],
     }
   }

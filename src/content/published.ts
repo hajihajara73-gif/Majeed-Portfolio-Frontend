@@ -287,6 +287,11 @@ const mergedProjects: readonly Project[] = projectRows
             : base?.cover,
           // Galleries are not modelled in the database.
           gallery: base?.gallery ?? [],
+          // Neither is the release. The `projects` table has no version or
+          // store column, so this comes from the source entry keyed by the
+          // same slug — the CMS can edit everything around it without being
+          // able to claim a version the shipped artifact does not carry.
+          release: base?.release,
           github: pick(str(row.githubUrl), base?.github ?? null),
           liveUrl: pick(str(row.liveUrl), base?.liveUrl ?? null),
           features: pick(strList(row.features), [...(base?.features ?? [])]),

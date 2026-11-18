@@ -1,9 +1,9 @@
 {
   "_meta": {
     "source": "published",
-    "snapshotId": "21017a7f-4558-402e-b8fb-77c93e4522ef",
-    "checksum": "e53a2f7b1bfd0bfc4c681965be14443e94e904ec6c91d1cc85144cb4a58e7b4d",
-    "publishedAt": "2026-11-04T16:10:14.981826+00:00",
+    "snapshotId": "5c476dc1-a44f-4e97-b7f0-dae294bc4c78",
+    "checksum": "bc8ee0ebe2c7d53bf4572743928b993c5708d80936cc57df1efd0034337414f9",
+    "publishedAt": "2026-11-18T14:08:08.059342+00:00",
     "blocking": [],
     "warnings": [],
     "mediaFiles": 52
@@ -402,6 +402,50 @@
       "deploymentNote": null
     },
     {
+      "slug": "nexus-local-ai-privacy-firewall",
+      "cover": null,
+      "order": 2,
+      "title": "NEXUS 3.0 — Local AI Privacy Firewall",
+      "status": "live",
+      "liveUrl": "https://microsoftedge.microsoft.com/addons/detail/dcnjpcfgmemhkmaookacopaaigmdpahp",
+      "problem": "Pasting a stack trace, a config file or a screenshot into a chatbot sends whatever was in it — API keys, database URLs, customer data — to a third party’s logs, and possibly a training set. Rotating the key is the only remedy, and most people never realise they need to.",
+      "results": [],
+      "summary": "A local-first privacy firewall for AI tools. NEXUS inspects what you are about to send — typed prompts, screenshots and clipboard text — finds credentials, keys and personal data in it, scores the risk, and offers a sanitized version to send instead.",
+      "category": "Browser Extension / Privacy & Security",
+      "featured": true,
+      "features": [],
+      "githubUrl": null,
+      "solutions": [],
+      "challenges": [],
+      "highlights": [
+        "Screenshot privacy firewall — reads text out of a PNG, JPG or WEBP with a bundled WebAssembly OCR engine, maps each detection back to its pixels, and redacts it before the image is saved",
+        "Clipboard guardian — scans clipboard text only when you hand it over; clipboardRead is an optional permission, so there is no background monitoring",
+        "Destination-aware policy — rules name both sides, so an API key heading for an external AI resolves differently from an email address heading for your own organisation",
+        "The extension ships with no host permissions and no network code at all: the build fails if fetch, XMLHttpRequest, WebSocket, sendBeacon or importScripts appear in the content-script bundle",
+        "Content-Security-Policy pins connect-src to ‘self’, so extension pages cannot reach an external origin even if a future bug tried to",
+        "Proven end to end by a Playwright suite that loads the real unpacked extension, feeds it credentials rendered into actual pixels, and checks the sanitized PNG differs where the secret was"
+      ],
+      "shortTitle": "NEXUS 3.0",
+      "description": [
+        "The architectural argument is the product: an AI service cannot be the thing that decides whether your data is safe to send to an AI service, because asking it means sending the data first. So detection, scoring and redaction all run on the device, before anything crosses the boundary.",
+        "What that protects is the raw value. When you choose to send a sanitized prompt, the sanitized text is still submitted to whichever AI provider you are using — the secret is what stays behind, replaced by a placeholder that keeps the prompt answerable."
+      ],
+      "architecture": "A TypeScript monorepo. A shared detection engine does preprocessing, detection, risk scoring and sanitization, and is consumed by three surfaces: the Manifest V3 browser extension published on Edge, an OCR package wrapping a vendored WebAssembly Tesseract build, and a companion React console for reviewing content outside the browser extension. The extension bundle is built with esbuild and carries no runtime dependencies.",
+      "organization": null,
+      "technologies": [
+        "TypeScript",
+        "Manifest V3",
+        "Tesseract.js",
+        "WebAssembly",
+        "esbuild",
+        "Canvas API",
+        "Chrome Extensions API",
+        "Playwright",
+        "Vitest"
+      ],
+      "deploymentNote": null
+    },
+    {
       "slug": "zara-ai-platform",
       "cover": {
         "id": "5ec42df6-363d-42cc-8a3b-d688a3316382",
@@ -411,7 +455,7 @@
         "width": 1280,
         "height": 800
       },
-      "order": 2,
+      "order": 3,
       "title": "Zara AI Platform",
       "status": "live",
       "liveUrl": "https://zara-ai-assists.netlify.app/",
@@ -462,7 +506,7 @@
         "width": 1280,
         "height": 800
       },
-      "order": 3,
+      "order": 4,
       "title": "Diabetes Prediction",
       "status": "live",
       "liveUrl": "https://diabetic-prediction-y2qs.onrender.com/",
@@ -498,42 +542,6 @@
         "Render"
       ],
       "deploymentNote": null
-    },
-    {
-      "slug": "online-library-management-system",
-      "cover": null,
-      "order": 4,
-      "title": "Online Library Management System",
-      "status": "local",
-      "liveUrl": null,
-      "problem": null,
-      "results": [],
-      "summary": "An online library management system developed to digitize core library operations, including the management of library records and common CRUD-based workflows through a web interface.",
-      "category": "Web Application",
-      "featured": false,
-      "features": [],
-      "githubUrl": "https://github.com/majeed74905/online-library-management-system",
-      "solutions": [],
-      "challenges": [],
-      "highlights": [
-        "Separate administrator and student areas with session-based login",
-        "CRUD management for books, authors and categories",
-        "Student registration, book issue and return tracking with borrowing history",
-        "Database access through PDO prepared statements against MySQL"
-      ],
-      "shortTitle": "Library Management System",
-      "description": [],
-      "architecture": null,
-      "organization": null,
-      "technologies": [
-        "PHP",
-        "PDO",
-        "MySQL",
-        "Bootstrap",
-        "jQuery",
-        "DataTables"
-      ],
-      "deploymentNote": "Local deployment"
     }
   ],
   "achievements": [

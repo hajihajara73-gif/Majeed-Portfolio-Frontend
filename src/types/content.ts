@@ -152,7 +152,33 @@ export interface StructuredDataFacts {
   /** Topics, drawn from skills that genuinely appear in the portfolio. */
   readonly knowsAbout: readonly string[]
   readonly alumniOf: readonly AlumniOrganization[]
+  /**
+   * Software published on a public store. Emitted as schema.org
+   * `SoftwareApplication` at build time, and read back by `projects.ts` so
+   * the badge on the card and the structured data share one version string.
+   */
+  readonly publishedApps: readonly PublishedApp[]
   readonly socialCard: SocialCard
+}
+
+/**
+ * One publicly installable release.
+ *
+ * Every field must come from the shipped artifact's own manifest. Ratings and
+ * install counts are deliberately absent: there is nowhere honest to get them
+ * from at build time, and inventing them is exactly what this file forbids.
+ */
+export interface PublishedApp {
+  readonly name: string
+  readonly version: string
+  /** The store, e.g. `Microsoft Edge Add-ons`. */
+  readonly channel: string
+  /** The public listing. Must resolve. */
+  readonly url: string
+  /** schema.org `applicationCategory`, e.g. `BrowserApplication`. */
+  readonly category: string
+  readonly operatingSystem: string
+  readonly description: string
 }
 
 /* -------------------------------------------------------------------------- */
@@ -264,6 +290,27 @@ export interface SkillsContent {
 
 export type ProjectStatus = 'live' | 'local' | 'in-progress' | 'archived'
 
+/**
+ * A published release of a project, when it ships as a product rather than
+ * as a deployed site — a browser extension on a store, for instance.
+ *
+ * SOURCE-ONLY, like `gallery`. The `projects` table has no version or store
+ * column, and inventing one to hold two strings would be fabricating a
+ * parallel schema for a single project. So this lives in the content module
+ * and `published.ts` carries it across from the base entry, exactly as it
+ * already does for galleries.
+ *
+ * Both fields must be provable. `version` is the version in the shipped
+ * manifest, not a number someone would like it to be, and `channel` names a
+ * store the project is genuinely listed on.
+ */
+export interface ProjectRelease {
+  /** Exactly the version string in the published artifact, e.g. `3.0.0`. */
+  readonly version: string
+  /** The store it is published on, e.g. `Microsoft Edge Add-ons`. */
+  readonly channel: string
+}
+
 export interface Project {
   readonly slug: string
   readonly title: string
@@ -294,6 +341,11 @@ export interface Project {
   readonly cover?: ImageAsset
   /** Screenshots. Rendered as a gallery when non-empty. */
   readonly gallery: readonly ImageAsset[]
+  /**
+   * Set only for projects published as a product on a store. Drives the
+   * version and store badges, and the wording of the primary call to action.
+   */
+  readonly release?: ProjectRelease
   readonly github: string | Todo | null
   /** Public deployment. `null` when the project only runs locally. */
   readonly liveUrl: string | Todo | null

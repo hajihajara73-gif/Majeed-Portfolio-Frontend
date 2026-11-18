@@ -81,6 +81,43 @@ export const seoFacts: StructuredDataFacts = {
     'Machine learning',
     'Docker',
     'Cloud deployment',
+    // Added with NEXUS, which is a shipped product in these areas rather
+    // than an interest: a published Manifest V3 extension doing on-device
+    // OCR and data redaction.
+    'Browser extension development',
+    'Data privacy engineering',
+  ],
+
+  /**
+   * Software published on a public store, under its own identity.
+   *
+   * This is the ONE source of truth for a release. `projects.ts` reads the
+   * version and channel back out of here for the card badges, and
+   * `vite.config.ts` emits a schema.org `SoftwareApplication` from the same
+   * values — so the badge on the page and the structured data a crawler
+   * reads cannot drift apart.
+   *
+   * A `SoftwareApplication` node is defensible where a generic project node
+   * is not: this site has no project pages for a project entity to be the
+   * subject of, but an installable extension's canonical identity is its
+   * store listing, which is a real URL that resolves.
+   *
+   * Every value is read from the shipped artifact — `release/extension/
+   * manifest.json` in the NEXUS repository — not from a description of it.
+   * No ratings and no install counts: nothing here may be invented, and an
+   * aggregateRating with no reviews behind it is exactly that.
+   */
+  publishedApps: [
+    {
+      name: 'NEXUS — Local AI Privacy Firewall',
+      version: '3.0.0',
+      channel: 'Microsoft Edge Add-ons',
+      url: 'https://microsoftedge.microsoft.com/addons/detail/dcnjpcfgmemhkmaookacopaaigmdpahp',
+      category: 'BrowserApplication',
+      operatingSystem: 'Microsoft Edge',
+      description:
+        'A local-first AI privacy firewall. Detects and masks sensitive data in text, screenshots and clipboard content before it reaches an AI site, with detection and redaction running on the device.',
+    },
   ],
 
   /**

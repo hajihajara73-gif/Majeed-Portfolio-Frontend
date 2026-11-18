@@ -2,9 +2,28 @@ import type { ReactNode } from 'react'
 import { Reveal } from '@/components/Reveal'
 import { Section } from '@/components/Section'
 import { TiltCard } from '@/components/TiltCard'
-import { flagshipProject, projects, secondaryProjects } from '@/content/projects'
+import { projects } from '@/content'
 import { cn } from '@/lib/cn'
-import { resolved, resolvedList, type Project } from '@/types/content'
+import {
+  resolved,
+  resolvedList,
+  type ImageAsset,
+  type Project,
+} from '@/types/content'
+
+/* Derived here rather than imported from the content module.
+ *
+ * `@/content/projects` is the SOURCE module; `@/content` is the CMS-backed
+ * overlay every other section reads. This section used to import the former,
+ * which meant an edit made in the admin reached the hero's featured cards
+ * (they read the overlay) and then failed to reach the full entry directly
+ * below them. The two agreed only because nobody had edited a project yet.
+ *
+ * Ordering by `order` rather than trusting array position, because the CMS
+ * can reorder and the exported snapshot preserves whatever it was given. */
+const ordered = [...projects.items].sort((a, b) => a.order - b.order)
+const flagshipProject = ordered[0]
+const secondaryProjects = ordered.slice(1)
 
 /**
  * Projects.
@@ -93,6 +112,7 @@ function Flagship({ project }: { readonly project: Project }) {
               Flagship project
             </span>
             <StatusBadge project={project} />
+            <ReleaseBadges project={project} />
           </div>
 
           {project.organization && (
@@ -213,6 +233,7 @@ function SecondaryProject({ project }: { readonly project: Project }) {
             {project.category}
           </span>
           <StatusBadge project={project} />
+          <ReleaseBadges project={project} />
         </div>
 
         <h4 className="mt-[var(--space-xs)] text-h3 text-ink">
@@ -246,6 +267,8 @@ function SecondaryProject({ project }: { readonly project: Project }) {
           className="mt-[var(--space-sm)]"
         />
 
+        <ProjectGallery project={project} className="mt-[var(--space-md)]" />
+
         <ProjectLinks project={project} className="mt-[var(--space-md)]" />
       </div>
     </article>
@@ -276,6 +299,91 @@ function StatusBadge({ project }: { readonly project: Project }) {
     )
   }
   return null
+}
+
+/**
+ * Screenshots beneath a project, when it has any.
+ *
+ * The `gallery` field has existed on every project since the type was
+ * written and nothing ever displayed it. This renders it.
+ *
+ * Plain figures with real captions rather than a lightbox: a modal would
+ * need focus trapping, an escape handler and a restore target to be usable
+ * by keyboard, and none of that earns its place for two screenshots that
+ * are perfectly readable in the page. Each one links to the full-size file,
+ * so a reader who wants a closer look still has one.
+ */
+function ProjectGallery({
+  project,
+  className,
+}: {
+  readonly project: Project
+  readonly className?: string
+}) {
+  // flatMap rather than map + a type predicate: the predicate would have to
+  // name this array's own element type while defining it, which is circular.
+  const shots = project.gallery.flatMap(
+    (shot): readonly { readonly shot: ImageAsset; readonly src: string }[] => {
+      const src = resolved(shot.src)
+      return src ? [{ shot, src }] : []
+    },
+  )
+
+  if (shots.length === 0) return null
+
+  return (
+    <figure className={className}>
+      <figcaption className="font-mono text-caption uppercase text-gold">
+        Inside the product
+      </figcaption>
+      <ul className="mt-[var(--space-sm)] grid gap-[var(--space-sm)] sm:grid-cols-2">
+        {shots.map(({ shot, src }) => (
+          <li key={src}>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-panel block overflow-hidden p-1 transition-colors duration-normal ease-cinematic hover:border-gold/40"
+            >
+              <img
+                src={src}
+                srcSet={shot.srcSet}
+                sizes={shot.sizes}
+                alt={shot.alt}
+                width={shot.width}
+                height={shot.height}
+                loading="lazy"
+                decoding="async"
+                className="aspect-[16/10] w-full rounded-md object-cover object-top"
+              />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  )
+}
+
+/**
+ * Version and store badges, for a project that ships as a product.
+ *
+ * Renders nothing at all unless the content provides a release, so the four
+ * projects that are deployments rather than products are untouched.
+ */
+function ReleaseBadges({ project }: { readonly project: Project }) {
+  const release = project.release
+  if (!release) return null
+
+  return (
+    <>
+      <span className="rounded-pill border border-border-strong px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-ink-secondary">
+        v{release.version}
+      </span>
+      <span className="rounded-pill border border-gold/40 bg-gold/5 px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-gold">
+        {release.channel}
+      </span>
+    </>
+  )
 }
 
 function TechStack({
@@ -320,7 +428,10 @@ function ProjectLinks({
     <div className={cn('flex flex-wrap gap-[var(--space-sm)]', className)}>
       {live && (
         <ExternalLink href={live} primary>
-          View live system
+          {/* A store listing is an install, not a visit. The wording comes
+              from the release in the content layer, so this stays free of
+              any one product's name. */}
+          {project.release ? `Get it on ${project.release.channel}` : 'View live system'}
           <span className="sr-only"> — {name} (opens in a new tab)</span>
         </ExternalLink>
       )}
