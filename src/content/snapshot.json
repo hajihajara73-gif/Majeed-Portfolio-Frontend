@@ -1,12 +1,12 @@
 {
   "_meta": {
     "source": "published",
-    "snapshotId": "5c476dc1-a44f-4e97-b7f0-dae294bc4c78",
-    "checksum": "bc8ee0ebe2c7d53bf4572743928b993c5708d80936cc57df1efd0034337414f9",
-    "publishedAt": "2026-11-18T14:08:08.059342+00:00",
+    "snapshotId": "314b39c6-a95c-4e5a-871b-a35b26a2f0d8",
+    "checksum": "31a8730d4191a34f1e8b47cba713de2680afc15b0a6e049eb15ec1738d5fbbc8",
+    "publishedAt": "2026-11-18T17:15:55.221265+00:00",
     "blocking": [],
     "warnings": [],
-    "mediaFiles": 52
+    "mediaFiles": 53
   },
   "home": {
     "music": {
@@ -354,7 +354,7 @@
         "width": 1280,
         "height": 800
       },
-      "order": 1,
+      "order": 0,
       "title": "Periyar University PhD Admission Management System",
       "status": "live",
       "liveUrl": "http://research.periyaruniversity.ac.in/rnd-app/student-app/home",
@@ -403,8 +403,15 @@
     },
     {
       "slug": "nexus-local-ai-privacy-firewall",
-      "cover": null,
-      "order": 2,
+      "cover": {
+        "id": "0663c930-135e-403f-a124-31a704f2b8f4",
+        "alt": "The NEXUS listing on the Microsoft Edge Add-ons store: the extension titled NEXUS — Local AI Privacy Firewall, filed under Productivity with a Get button, two store screenshots showing the scanner and the image redaction view, and a sidebar reading Version 3.0.0, updated 8 November 2026.",
+        "url": "/uploads/image/f30e85ff2fc45b369b5c771d5d01a4a1.png",
+        "kind": "image",
+        "width": 1872,
+        "height": 902
+      },
+      "order": 1,
       "title": "NEXUS 3.0 — Local AI Privacy Firewall",
       "status": "live",
       "liveUrl": "https://microsoftedge.microsoft.com/addons/detail/dcnjpcfgmemhkmaookacopaaigmdpahp",
@@ -455,7 +462,7 @@
         "width": 1280,
         "height": 800
       },
-      "order": 3,
+      "order": 2,
       "title": "Zara AI Platform",
       "status": "live",
       "liveUrl": "https://zara-ai-assists.netlify.app/",
@@ -506,7 +513,7 @@
         "width": 1280,
         "height": 800
       },
-      "order": 4,
+      "order": 3,
       "title": "Diabetes Prediction",
       "status": "live",
       "liveUrl": "https://diabetic-prediction-y2qs.onrender.com/",

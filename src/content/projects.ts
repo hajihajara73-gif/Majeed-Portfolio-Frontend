@@ -173,14 +173,19 @@ const nexus: Project = {
     'Proven end to end by a Playwright suite that loads the real unpacked extension, feeds it credentials rendered into actual pixels, and checks the sanitized PNG differs where the secret was',
   ],
 
+  /* The cover is set in the CMS — the Microsoft Edge Add-ons listing itself,
+     which is the one piece of evidence a visitor can verify independently.
+     Repeated here so a build with no snapshot shows the same picture rather
+     than an older one; `published.ts` overlays the CMS copy when there is a
+     snapshot, and the two now point at the same file. No `srcSet`: the CMS
+     does not generate responsive variants, and inventing one here would make
+     most viewports load a file the CMS has never heard of. */
   cover: {
-    src: '/assets/projects/nexus-1280.webp',
-    srcSet:
-      '/assets/projects/nexus-640.webp 640w, /assets/projects/nexus-1280.webp 1280w',
+    src: '/uploads/image/f30e85ff2fc45b369b5c771d5d01a4a1.png',
     sizes: '(max-width: 768px) 92vw, 45vw',
-    alt: 'The NEXUS scanner reviewing a prompt before it is sent: seven detections listed with severity, including a database password and an OpenAI API key, beside a privacy risk score of 94 out of 100 marked critical and a choice of sanitization modes.',
-    width: 1280,
-    height: 800,
+    alt: 'The NEXUS listing on the Microsoft Edge Add-ons store: the extension titled NEXUS — Local AI Privacy Firewall, filed under Productivity with a Get button, two store screenshots showing the scanner and the image redaction view, and a sidebar reading Version 3.0.0, updated 8 November 2026.',
+    width: 1872,
+    height: 902,
   },
 
   /* Real captures from the project's own Playwright run, not mock-ups: the
