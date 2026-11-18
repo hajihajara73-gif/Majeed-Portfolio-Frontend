@@ -281,8 +281,14 @@ function SecondaryProject({ project }: { readonly project: Project }) {
 
 function StatusBadge({ project }: { readonly project: Project }) {
   if (project.status === 'live') {
+    /* Filled, not outlined. The outlined pill read as a generic status chip;
+       a solid forest fill makes "live" look like a state the product is in.
+       Warm-white on --color-forest measures 6.8:1, so the label stays AA at
+       caption size — keeping the green text on a green fill would have put it
+       at 4.0:1 and failed. The dot keeps the bright green, which is where the
+       signal belongs. */
     return (
-      <span className="inline-flex items-center gap-2 rounded-pill border border-forest-bright/40 px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-forest-bright">
+      <span className="inline-flex items-center gap-2 rounded-pill border border-forest-bright/35 bg-forest px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-ink">
         <span
           aria-hidden="true"
           className="h-1.5 w-1.5 rounded-pill bg-forest-bright"

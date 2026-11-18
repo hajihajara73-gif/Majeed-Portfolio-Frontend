@@ -75,7 +75,7 @@ export function FeaturedProjects({ slugs }: Props) {
                   {project.release && (
                     <ul className="mt-[var(--space-xs)] flex flex-wrap items-center gap-[var(--space-xs)]">
                       {project.status === 'live' && (
-                        <li className="inline-flex items-center gap-1.5 rounded-pill border border-forest-bright/40 px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-forest-bright">
+                        <li className="inline-flex items-center gap-1.5 rounded-pill border border-forest-bright/35 bg-forest px-[var(--space-sm)] py-0.5 font-mono text-caption uppercase text-ink">
                           <span
                             aria-hidden="true"
                             className="h-1.5 w-1.5 rounded-pill bg-forest-bright"
